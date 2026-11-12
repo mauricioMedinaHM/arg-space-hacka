@@ -1,8 +1,8 @@
 "use client";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { loadHistorical } from "@/lib/firms";
-import { ALG, runBenchmark, type BenchResult } from "@/lib/pipeline";
+import { ALG, runBenchmarkAsync, type BenchResult } from "@/lib/pipeline";
+import type { FireDetection } from "@/lib/types";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { SectionHeading, Shell } from "@/components/ui/Section";
 
@@ -12,21 +12,26 @@ const PER_BATCH = 10;
 
 type State =
   | { status: "idle" }
-  | { status: "running" }
+  | { status: "running"; done: number }
   | { status: "done"; r: BenchResult }
   | { status: "error" };
 
-/** Deja pintar el estado "midiendo" antes de bloquear el hilo principal. */
-const yieldToUI = () => new Promise<void>((res) => requestAnimationFrame(() => setTimeout(res, 60)));
+/** El snapshot (≈195 KB) se carga recién al medir: no pesa en la carga inicial de la página. */
+async function loadSample(): Promise<FireDetection[]> {
+  const mod = await import("@/data/firms-salta.json");
+  return mod.default as unknown as FireDetection[];
+}
 
 export function Benchmark() {
   const [state, setState] = useState<State>({ status: "idle" });
 
   async function run() {
-    setState({ status: "running" });
-    await yieldToUI();
+    setState({ status: "running", done: 0 });
     try {
-      const r = runBenchmark(N, loadHistorical(), PER_BATCH);
+      // El benchmark cede el hilo entre lotes: la página sigue respondiendo mientras mide.
+      const r = await runBenchmarkAsync(N, await loadSample(), PER_BATCH, (done) => {
+        if (done % 5 === 0) setState({ status: "running", done });
+      });
       setState({ status: "done", r });
     } catch {
       setState({ status: "error" });
@@ -76,7 +81,8 @@ export function Benchmark() {
             )}
           </button>
           <p className="mt-4 max-w-[46ch] text-[0.8125rem] leading-relaxed text-smoke">
-            La página se congela alrededor de un segundo mientras mide. Los números dependen de tu equipo y navegador.
+            Tarda alrededor de un segundo y corre en el hilo principal, en tandas cortas para no congelar la página.
+            Los números dependen de tu equipo y navegador.
           </p>
           {state.status === "error" && (
             <p className="mt-4 text-sm text-bad" role="alert">
@@ -85,7 +91,7 @@ export function Benchmark() {
           )}
         </div>
 
-        <div className="min-h-[22rem]" aria-live="polite">
+        <div className="min-h-[22rem]" role="status" aria-live="polite" aria-atomic="false">
           <AnimatePresence mode="wait">
             {!r ? (
               <motion.div
@@ -93,9 +99,16 @@ export function Benchmark() {
                 exit={{ opacity: 0 }}
                 className="flex h-full min-h-[22rem] items-center justify-center rounded-lg border border-dashed border-line-strong p-8 text-center text-[0.9375rem] leading-relaxed text-ash"
               >
-                {state.status === "running"
-                  ? `Firmando y verificando ${N} lotes…`
-                  : "Los resultados aparecen acá: tiempos por lote, caudal y cuánto pesa la firma."}
+                {state.status === "running" ? (
+                  <span>
+                    Firmando y verificando {N} lotes…{" "}
+                    <span aria-hidden className="font-mono tabular-nums text-smoke">
+                      {state.done}/{N}
+                    </span>
+                  </span>
+                ) : (
+                  "Los resultados aparecen acá: tiempos por lote, caudal y cuánto pesa la firma."
+                )}
               </motion.div>
             ) : (
               <motion.div key="res" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>

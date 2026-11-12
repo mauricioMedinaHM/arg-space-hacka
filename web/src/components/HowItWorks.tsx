@@ -1,5 +1,6 @@
 "use client";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
+import { useReducedMotionSafe } from "@/components/ui/useReducedMotionSafe";
 import type { IntegrityStatus } from "@/lib/types";
 import { SectionHeading, Shell } from "@/components/ui/Section";
 import { StatusBadge } from "@/components/demo/meta";
@@ -46,7 +47,7 @@ const BAD = "#ff5263";
 const OK = "#4bd58f";
 
 function Rail({ vertical }: { vertical?: boolean }) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   if (reduce) return null;
   return (
     <>
@@ -82,7 +83,7 @@ function Rail({ vertical }: { vertical?: boolean }) {
 const CHECKS: { name: string; what: string; fail: IntegrityStatus; note?: string }[] = [
   {
     name: "Lista de claves",
-    what: "El key_id del lote tiene que figurar entre las claves públicas en las que confía el verificador.",
+    what: "El lote tiene que estar bien formado, declarar ML-DSA-65 y traer un key_id que figure entre las claves públicas en las que confía el verificador.",
     fail: "unknown_key",
   },
   {
@@ -97,18 +98,18 @@ const CHECKS: { name: string; what: string; fail: IntegrityStatus; note?: string
   },
   {
     name: "Repetición",
-    what: "Un hash o un número de secuencia ya vistos se descartan: es un reenvío o un replay.",
+    what: "Un lote cuyo hash ya fue aceptado se descarta: es un reenvío o un replay.",
     fail: "duplicate",
   },
   {
     name: "Secuencia (seq)",
     what: "Un salto hacia adelante delata lotes faltantes; un seq atrasado que llega después queda como reordenado.",
     fail: "gap",
-    note: "La pérdida se nota recién cuando llega el lote siguiente.",
+    note: "La pérdida se nota recién cuando llega un lote posterior; la del último lote, sólo si se conoce el total esperado.",
   },
   {
     name: "Cadena (prev_hash)",
-    what: "Cada lote incluye el hash del anterior ya firmado. Si no coincide, el flujo se bifurcó.",
+    what: "Cada lote incluye el hash del anterior ya firmado. Si no coincide con sus vecinos, o si dos lotes distintos reclaman el mismo número, el flujo se bifurcó.",
     fail: "broken_chain",
   },
 ];

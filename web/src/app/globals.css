@@ -40,6 +40,14 @@ html {
   html {
     scroll-behavior: auto;
   }
+  /* Red de seguridad para lo que no pasa por motion (transiciones y animaciones CSS). */
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 body {

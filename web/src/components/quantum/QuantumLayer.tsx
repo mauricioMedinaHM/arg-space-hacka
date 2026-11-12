@@ -1,6 +1,6 @@
 "use client";
 import { AnimatePresence, motion } from "motion/react";
-import { useId, useState, type ReactNode } from "react";
+import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import {
   useQuantum,
   type GroverData,
@@ -36,7 +36,8 @@ function Circuit({ text, label }: { text: string; label: string }) {
       <figcaption className="mb-2 text-[0.8125rem] text-ash">{label}</figcaption>
       <pre
         tabIndex={0}
-        aria-label={label}
+        role="group"
+        aria-label={`${label}. Diagrama de texto; se puede desplazar con las flechas.`}
         className="circuit thin-scroll max-h-80 overflow-auto rounded-md border border-line bg-ink p-4 text-ash"
       >
         {text}
@@ -48,7 +49,7 @@ function Circuit({ text, label }: { text: string; label: string }) {
 function Pending<T>({ state, file, children }: { state: Loadable<T>; file: string; children: (d: T) => ReactNode }) {
   if (state.status === "loading") {
     return (
-      <div className="space-y-4" aria-busy="true" aria-label="Cargando resultados">
+      <div className="space-y-4" role="status" aria-busy="true" aria-label="Cargando resultados">
         <motion.div
           className="h-48 rounded-md bg-char"
           animate={{ opacity: [0.5, 1, 0.5] }}
@@ -129,10 +130,10 @@ function QrngPanel({ d }: { d: QrngData }) {
           </figure>
         }
       >
-        <Takeaway title="Ocho Hadamard, una medición, 32 bytes de semilla">
+        <Takeaway title="Ocho Hadamard, 32 disparos, 32 bytes de semilla">
           <p>
-            Cada qubit en superposición colapsa a 0 o 1 con probabilidad pareja. Los bits medidos se concatenan hasta
-            formar la semilla de 256 bits.
+            Cada qubit en superposición colapsa a 0 o 1 con probabilidad pareja. Cada disparo entrega {d.n_qubits} bits;
+            los primeros 256 bits medidos, sin post-procesar, forman la semilla.
           </p>
           <p>
             <strong>Esta semilla genera la clave ML-DSA-65 del recolector de la demo.</strong> Es didáctico: un
@@ -146,10 +147,13 @@ function QrngPanel({ d }: { d: QrngData }) {
           </div>
         </div>
         <dl className="mt-6 grid grid-cols-2 gap-x-6 sm:grid-cols-3">
-          <Stat k="Entropía por bit" v={nf(d.entropy_bits_per_bit, 6)} />
+          <Stat k="Entropía de Shannon por bit" v={nf(d.entropy_bits_per_bit, 6)} />
           <Stat k={`χ²${d.chi_square_dof ? ` (${d.chi_square_dof} g.l.)` : ""}`} v={nf(d.chi_square, 2)} />
           <Stat k="Valor p" v={nf(d.p_value, 3)} />
         </dl>
+        <p className="mt-3 text-[0.8125rem] leading-relaxed text-smoke">
+          Estas pruebas sólo dicen que no se detecta sesgo en la muestra; no certifican aleatoriedad.
+        </p>
       </Split>
       <Circuit text={d.circuit_text} label="Circuito del QRNG (salida de Qiskit)" />
     </>
@@ -310,7 +314,7 @@ function GroverPanel({ d }: { d: GroverData }) {
       >
         <Takeaway title="Una aceleración cuadrática, no un derrumbe">
           <p>
-            Grover encuentra una entrada entre {space} con unas {nf(d.quantum_queries, 1)} consultas, contra{" "}
+            Grover encuentra una entrada entre {space} con unas {nf(d.quantum_queries, 1)} consultas, contra unas{" "}
             {nf(d.classical_expected_queries, 0)} en promedio por fuerza bruta. La ventaja crece como la raíz cuadrada del
             espacio de búsqueda, nada más.
           </p>
@@ -335,6 +339,21 @@ function GroverPanel({ d }: { d: GroverData }) {
 export function QuantumLayer() {
   const [tab, setTab] = useState<TabId>("qrng");
   const uid = useId();
+  const tablist = useRef<HTMLDivElement>(null);
+
+  // Patrón ARIA de pestañas: un solo tope de tabulación y flechas / Inicio / Fin para cambiar.
+  function onTabKey(e: KeyboardEvent<HTMLDivElement>) {
+    const cur = TABS.findIndex((t) => t.id === tab);
+    let next: number;
+    if (e.key === "ArrowRight") next = (cur + 1) % TABS.length;
+    else if (e.key === "ArrowLeft") next = (cur - 1 + TABS.length) % TABS.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = TABS.length - 1;
+    else return;
+    e.preventDefault();
+    setTab(TABS[next].id);
+    tablist.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
+  }
   const qrng = useQuantum<QrngData>("qrng");
   const shor = useQuantum<ShorData>("shor");
   const grover = useQuantum<GroverData>("grover");
@@ -349,7 +368,13 @@ export function QuantumLayer() {
         </p>
       </SectionHeading>
 
-      <div role="tablist" aria-label="Experimentos cuánticos" className="grid grid-cols-3 border-b border-line">
+      <div
+        ref={tablist}
+        role="tablist"
+        aria-label="Experimentos cuánticos"
+        onKeyDown={onTabKey}
+        className="grid grid-cols-3 border-b border-line"
+      >
         {TABS.map((t) => {
           const active = tab === t.id;
           return (
@@ -360,9 +385,10 @@ export function QuantumLayer() {
               id={`${uid}-tab-${t.id}`}
               aria-selected={active}
               aria-controls={`${uid}-panel`}
+              tabIndex={active ? 0 : -1}
               onClick={() => setTab(t.id)}
               className={`relative px-2 pb-4 pt-2 text-left transition-colors duration-200 sm:px-4 ${
-                active ? "text-bone" : "text-smoke hover:text-ash"
+                active ? "text-bone" : "text-ash hover:text-bone"
               }`}
             >
               <span className="block text-base font-semibold sm:text-xl">{t.label}</span>
@@ -379,7 +405,7 @@ export function QuantumLayer() {
         })}
       </div>
 
-      <div id={`${uid}-panel`} role="tabpanel" aria-labelledby={`${uid}-tab-${tab}`} className="pt-10">
+      <div id={`${uid}-panel`} role="tabpanel" aria-labelledby={`${uid}-tab-${tab}`} tabIndex={0} className="pt-10">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={tab}

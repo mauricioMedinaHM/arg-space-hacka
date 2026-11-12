@@ -1,6 +1,7 @@
-// Helpers de datos NASA FIRMS (focos activos) para la provincia de Salta.
+// Helpers PUROS de datos NASA FIRMS (focos activos) para la provincia de Salta.
+// Sin imports de datos: este módulo entra al bundle del cliente. El snapshot (161 KB) vive en
+// `./firms-historical` (`loadHistorical`), que el cliente debe cargar con `import()` dinámico.
 import type { FireDetection } from "./types";
-import historical from "../data/firms-salta.json";
 
 /** Rectángulo aproximado de la provincia de Salta (grados decimales, WGS84). */
 export const SALTA_BBOX = {
@@ -24,8 +25,12 @@ const SATELLITES: Record<string, FireDetection["satellite"]> = {
   NPP: "N",
   "1": "N20",
   N20: "N20",
+  J1: "N20",
+  "NOAA-20": "N20",
   "2": "N21",
   N21: "N21",
+  J2: "N21",
+  "NOAA-21": "N21",
   T: "Terra",
   TERRA: "Terra",
   A: "Aqua",
@@ -60,10 +65,12 @@ const num = (v: string | undefined): number => {
  * - MODIS: `brightness` → bright_ti4, `bright_t31` → bright_ti5, confianza numérica → l/n/h.
  * - Filas inválidas (sin lat/lon/fecha o satélite desconocido) se descartan sin lanzar.
  * - Respuestas que no son CSV (p. ej. "Invalid MAP_KEY.") devuelven [].
+ * - `fallbackSatellite`: satélite a asumir si la fila no lo trae o no se reconoce.
  */
 export function parseFirmsCsv(
   csv: string,
   source: FireDetection["source"] = "firms-live",
+  fallbackSatellite?: FireDetection["satellite"],
 ): FireDetection[] {
   const lines = csv.split(/\r?\n/).filter((l) => l.trim() !== "");
   if (lines.length < 2) return [];
@@ -80,7 +87,9 @@ export function parseFirmsCsv(
     const instrRaw = (r.instrument ?? "").toUpperCase();
     const satellite =
       SATELLITES[(r.satellite ?? "").toUpperCase()] ??
-      // el área API a veces omite el satélite: se infiere del instrumento
+      // el área API a veces omite el satélite: se usa el del producto consultado
+      // (p. ej. VIIRS_NOAA21_NRT → "N21") o, en su defecto, se infiere del instrumento
+      fallbackSatellite ??
       (instrRaw === "VIIRS" ? "N" : undefined);
     if (!satellite) continue;
     if (r.latitude === "" || r.longitude === "") continue;
@@ -113,15 +122,17 @@ export function parseFirmsCsv(
   return out;
 }
 
+/** Une varias listas quitando duplicados por `id` (gana la primera aparición) y ordena. */
+export function mergeDetections(...lists: FireDetection[][]): FireDetection[] {
+  const byId = new Map<string, FireDetection>();
+  for (const list of lists) for (const d of list) if (!byId.has(d.id)) byId.set(d.id, d);
+  return sortDetections([...byId.values()]);
+}
+
 /** Orden cronológico estable (acq_date + acq_time, luego id). */
 export function sortDetections(dets: FireDetection[]): FireDetection[] {
   const key = (d: FireDetection) => `${d.acq_date}${d.acq_time}${d.satellite}${d.id}`;
   return [...dets].sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));
-}
-
-/** Snapshot congelado (FIRMS real "historical" + escenario "synthetic"), ya ordenado. */
-export function loadHistorical(): FireDetection[] {
-  return historical as unknown as FireDetection[];
 }
 
 /** Parte las detecciones en lotes consecutivos de `size` (el último puede ser menor). */

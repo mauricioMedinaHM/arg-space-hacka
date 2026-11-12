@@ -1,6 +1,7 @@
 import type { AttackKind, SignedBatch } from "../types";
 import { Collector } from "./collector";
-import { generateKeyPair } from "./keys";
+import { canonicalJSON, sha3, bytesToHex, toBase64 } from "./canonical";
+import { ALG, generateKeyPair, signBytes } from "./keys";
 
 const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x));
 
@@ -48,4 +49,24 @@ export function forgeBatch(like: SignedBatch): SignedBatch {
     like.payload.detections.map((d) => ({ ...d, id: `${d.id}-fake`, frp: 0.1, confidence: "l" as const })),
   );
   return fake;
+}
+
+/**
+ * Falsificación más fina: el atacante copia seq, prev_hash y el key_id CONFIABLE del lote legítimo,
+ * recalcula el hash y firma con su propia clave. Pasa la lista de claves y el hash; lo frena la
+ * verificación de la firma ML-DSA (queda como "tampered").
+ */
+export function forgeWithSpoofedKeyId(like: SignedBatch): SignedBatch {
+  const attacker = generateKeyPair();
+  const payload = {
+    ...clone(like.payload),
+    detections: like.payload.detections.map((d) => ({ ...d, frp: 0.1, confidence: "l" as const })),
+  };
+  const digest = sha3(canonicalJSON(payload));
+  return {
+    payload,
+    payload_hash: bytesToHex(digest),
+    signature: toBase64(signBytes(digest, attacker.secretKey)),
+    alg: ALG,
+  };
 }

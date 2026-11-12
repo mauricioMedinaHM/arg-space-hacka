@@ -12,7 +12,11 @@ const NOT = [
   },
   {
     title: "No prueba que NASA haya firmado el dato",
-    text: "La firma acredita integridad y procedencia desde el recolector en adelante. Si al recolector le llega un dato erróneo, lo firma igual.",
+    text: "La firma acredita integridad y procedencia desde el recolector en adelante. Si al recolector le llega un dato erróneo, lo firma igual. Y si le roban la clave, quien la tenga firma lotes que pasan por legítimos.",
+  },
+  {
+    title: "No ve la pérdida del último lote",
+    text: "Un lote suprimido se descubre cuando llega uno posterior. Si alguien corta el final del flujo, la secuencia no lo delata: hace falta conocer por un canal autenticado cuántos lotes se emitieron, o un latido firmado periódico.",
   },
   {
     title: "FIRMS puede no ver un incendio",
@@ -55,13 +59,14 @@ export function Limits() {
         </span>
         <p className="text-xl font-medium leading-snug text-bone md:text-2xl">
           Sí garantiza que cada lote que acepta el verificador es exactamente el que firmó el recolector, en el orden en
-          que lo firmó, y que si alguno falta o se repite, queda registrado.
+          que lo firmó, y que si alguno se repite o falta en el medio del flujo, queda registrado.
         </p>
       </motion.div>
 
-      <dl className="grid gap-x-14 md:grid-cols-2">
+      <h3 className="sr-only">Lo que no garantiza</h3>
+      <ul className="grid gap-x-14 md:grid-cols-2">
         {NOT.map((n, i) => (
-          <motion.div
+          <motion.li
             key={n.title}
             className="flex gap-4 border-t border-line py-6"
             initial={{ opacity: 0, y: 14 }}
@@ -73,12 +78,12 @@ export function Limits() {
               <CrossIcon strokeWidth={2} />
             </span>
             <div>
-              <dt className="text-lg font-semibold text-bone">{n.title}</dt>
-              <dd className="mt-2 max-w-[52ch] text-[0.9375rem] leading-relaxed text-ash">{n.text}</dd>
+              <h4 className="text-lg font-semibold text-bone">{n.title}</h4>
+              <p className="mt-2 max-w-[52ch] text-[0.9375rem] leading-relaxed text-ash">{n.text}</p>
             </div>
-          </motion.div>
+          </motion.li>
         ))}
-      </dl>
+      </ul>
     </Shell>
   );
 }

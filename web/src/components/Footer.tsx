@@ -1,7 +1,8 @@
 import { BrandMark, ExternalIcon } from "@/components/ui/icons";
 
 const SOURCES = [
-  ["Gobierno de Salta", "Parte del incendio en Cafayate, 14/06/2026", "https://www.salta.gob.ar"],
+  ["La Gaceta", "Incendio en Cafayate: más de 200 ha afectadas (jun. 2026)", "https://www.lagaceta.com.ar/nota/1142540/sociedad/incendio-cafayate-mas-200-hectareas-afectadas-continuan-operativos-para-evitar-rebrotes.html"],
+  ["Canal 26", "Daño ambiental del incendio forestal en Cafayate (19/06/2026)", "https://www.canal26.com/planeta/2026/06/19/incendio-forestal-en-cafayate-ya-son-mas-de-200-hectareas-afectadas-y-afirman-que-el-dano-ambiental-es-considerable/"],
   ["NIST FIPS 204", "Estándar ML-DSA (firma digital basada en retículos)", "https://csrc.nist.gov/pubs/fips/204/final"],
   ["NASA FIRMS", "Focos activos VIIRS y MODIS en tiempo casi real", "https://firms.modaps.eosdis.nasa.gov/"],
   ["FIRMS: preguntas frecuentes", "Limitaciones de la detección satelital", "https://www.earthdata.nasa.gov/data/tools/firms/faq"],
@@ -38,6 +39,7 @@ export function Footer() {
                   <span className="text-sm text-ash">{desc}</span>
                   <span className="inline-flex items-center gap-1.5 break-all font-mono text-xs text-smoke group-hover:text-bone">
                     {href.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")} <ExternalIcon width={12} height={12} />
+                    <span className="sr-only">(se abre en una pestaña nueva)</span>
                   </span>
                 </a>
               </li>

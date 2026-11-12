@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { SALTA_BBOX, inSalta, loadHistorical, mapConfidence, parseFirmsCsv, toBatches } from "../firms";
+import { SALTA_BBOX, inSalta, mapConfidence, parseFirmsCsv, toBatches } from "../firms";
+import { loadHistorical } from "../firms-historical";
 
 const VIIRS_API = `latitude,longitude,bright_ti4,scan,track,acq_date,acq_time,satellite,instrument,confidence,version,bright_ti5,frp,daynight
 -26.07012,-65.97034,341.2,0.41,0.45,2026-06-14,1742,N,VIIRS,n,2.0NRT,295.1,12.4,D

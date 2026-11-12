@@ -1,38 +1,35 @@
 "use client";
-import dynamic from "next/dynamic";
 import { motion } from "motion/react";
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { DemoEngine } from "@/lib/demo/engine";
-import { loadHistorical, sortDetections } from "@/lib/firms";
 import { ALG, SIZES, generateKeyPair, hexToBytes } from "@/lib/pipeline";
+import { describeSource } from "@/lib/live/source";
+import { useSignedStream } from "@/lib/live/useSignedStream";
 import { fetchQuantum, type QrngData } from "@/lib/quantum";
 import type { AttackKind, FireDetection } from "@/lib/types";
 import { PauseIcon, PlayIcon, ResetIcon, StepIcon } from "@/components/ui/icons";
 import { Segmented } from "@/components/ui/Segmented";
 import { SectionHeading, Shell } from "@/components/ui/Section";
 import { BatchLog } from "./BatchLog";
+import { LazyMap } from "./LazyMap";
 import { MetricsBar } from "./MetricsBar";
 import { NetworkLane } from "./NetworkLane";
 
-const FireMap = dynamic(() => import("./FireMap"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-full items-center justify-center font-mono text-xs text-smoke">Cargando mapa…</div>
-  ),
-});
+type LocalData = { cafayate: FireDetection[]; historico: FireDetection[] };
 
 type ScenarioId = "cafayate" | "historico" | "live";
 
 type LiveState =
   | { status: "idle" }
+  /** Esperando que el monitor termine de recibir un ciclo firmado por el servidor. */
   | { status: "loading" }
-  | { status: "done"; source: string; count: number; fetchedAt?: string; note?: string }
-  | { status: "error"; note: string };
+  | { status: "server"; label: string; live: boolean; count: number; batches: number; cycle: number }
+  | { status: "fallback"; note: string };
 
 const SCENARIOS = [
   { value: "cafayate" as const, label: "Cafayate jun-2026 (sintético)" },
-  { value: "historico" as const, label: "Histórico Salta" },
-  { value: "live" as const, label: "FIRMS en vivo" },
+  { value: "historico" as const, label: "Snapshot real Salta" },
+  { value: "live" as const, label: "FIRMS en vivo (firmado por el servidor)" },
 ];
 const SPEEDS = [0.5, 1, 2, 4].map((v) => ({ value: v, label: `${String(v).replace(".", ",")}×` }));
 const SIZES_OPT = [5, 10, 20].map((v) => ({ value: v, label: String(v) }));
@@ -52,7 +49,7 @@ function Legend() {
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-[0.75rem] text-ash">
       <li className="flex items-center gap-1.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-fire" /> Lote válido (tamaño según FRP)
+        <span className="h-2.5 w-2.5 rounded-full bg-fire" /> Foco de un lote válido (tamaño según FRP)
       </li>
       <li className="flex items-center gap-1.5">
         <span className="h-2.5 w-2.5 rounded-full border-2 border-amber" /> Reordenado
@@ -73,19 +70,39 @@ export function LiveDemo() {
   const [scenario, setScenario] = useState<ScenarioId>("cafayate");
   const [live, setLive] = useState<LiveState>({ status: "idle" });
   const [keyError, setKeyError] = useState(false);
-  const token = useRef(0);
+  const { snap: stream, store: streamStore } = useSignedStream();
 
-  const local = useMemo(() => {
-    const all = loadHistorical();
-    return {
-      cafayate: all.filter((d) => d.source === "synthetic"),
-      historico: all.filter((d) => d.source !== "synthetic"),
+  // El snapshot (~160 KB) no viaja en el bundle inicial: se pide aparte al montar el sandbox.
+  const [local, setLocal] = useState<LocalData | null>(null);
+  const [localError, setLocalError] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    import("@/lib/firms-historical").then(
+      (m) => {
+        if (!alive) return;
+        const all = m.loadHistorical();
+        setLocal({
+          cafayate: all.filter((d) => d.source === "synthetic"),
+          historico: all.filter((d) => d.source !== "synthetic"),
+        });
+      },
+      () => alive && setLocalError(true),
+    );
+    return () => {
+      alive = false;
     };
   }, []);
 
+  // Los escenarios locales (y el respaldo del escenario en vivo) se cargan cuando el snapshot está disponible.
+  const liveStatus = live.status;
+  useEffect(() => {
+    if (!local) return;
+    if (scenario !== "live") engine.load(local[scenario]);
+    else if (liveStatus === "fallback") engine.load(local.historico);
+  }, [local, scenario, liveStatus, engine]);
+
   useEffect(() => {
     let alive = true;
-    engine.load(local.cafayate);
     fetchQuantum<QrngData>("qrng")
       .then((q) => generateKeyPair(hexToBytes(q.seed_hex)))
       .then(
@@ -100,60 +117,86 @@ export function LiveDemo() {
       alive = false;
       engine.dispose();
     };
-  }, [engine, local]);
+  }, [engine]);
 
-  async function choose(id: ScenarioId) {
-    const t = ++token.current;
+  /** Carga en el sandbox el último ciclo completo que firmó el servidor. Devuelve false si todavía no hay. */
+  function loadServerCycle(): boolean {
+    const pk = streamStore.trustedPublicKey;
+    const cur = streamStore.getSnapshot();
+    if (!pk || !cur.collector || cur.stats.cycles === 0) return false;
+    const src = describeSource(cur.hello?.source, cur.hello?.origin);
+    if (cur.lastBatches.length === 0) {
+      setLive({
+        status: "fallback",
+        note: src.live
+          ? "FIRMS no informó focos en Salta en las últimas 24 h, así que no hay lotes del servidor para atacar. Se usa el snapshot real local, firmado en tu navegador."
+          : "El servidor no entregó lotes. Se usa el snapshot real local, firmado en tu navegador.",
+      });
+      return true;
+    }
+    engine.loadSigned(cur.lastBatches, pk, cur.collector.key_id);
+    setLive({
+      status: "server",
+      label: src.label,
+      live: src.live,
+      count: cur.lastBatches.reduce((n, b) => n + b.payload.detections.length, 0),
+      batches: cur.lastBatches.length,
+      cycle: cur.stats.cycles,
+    });
+    return true;
+  }
+
+  function choose(id: ScenarioId) {
     setScenario(id);
     if (id !== "live") {
       setLive({ status: "idle" });
-      engine.load(local[id]);
       return;
     }
-    setLive({ status: "loading" });
+    if (loadServerCycle()) return;
     engine.load([]);
-    try {
-      const res = await fetch("/api/firms?days=1");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const body: { source?: string; fetched_at?: string; note?: string; detections?: FireDetection[] } = await res.json();
-      if (t !== token.current) return;
-      const source = body.source ?? "desconocido";
-      let dets = Array.isArray(body.detections) ? body.detections : [];
-      if (source !== "firms-live") dets = dets.filter((d) => d.source !== "synthetic");
-      if (!dets.length) {
-        engine.load(local.historico);
-        setLive({
-          status: "done",
-          source: "historical",
-          count: local.historico.length,
-          note:
-            source === "firms-live"
-              ? "FIRMS respondió sin focos en Salta para las últimas 24 h. Se usa el snapshot histórico local."
-              : "FIRMS en vivo no está disponible. Se usa el snapshot histórico local.",
-        });
-        return;
-      }
-      engine.load(sortDetections(dets));
-      setLive({ status: "done", source, count: dets.length, fetchedAt: body.fetched_at, note: body.note });
-    } catch {
-      if (t !== token.current) return;
-      engine.load(local.historico);
-      setLive({ status: "error", note: "No se pudo consultar /api/firms. Se usa el snapshot histórico local." });
-    }
+    setLive({ status: "loading" });
   }
+
+  // Si se eligió "en vivo" antes de que terminara el primer ciclo, se carga apenas esté completo.
+  // Si el flujo no logra conectar, se cae al snapshot local para no dejar el sandbox vacío.
+  const waitingServer = scenario === "live" && live.status === "loading";
+  const streamCycles = stream.stats.cycles;
+  const streamDown = stream.phase === "retrying" && stream.attempt >= 2;
+  useEffect(() => {
+    if (!waitingServer) return;
+    if (streamCycles > 0) {
+      queueMicrotask(loadServerCycle);
+    } else if (streamDown) {
+      queueMicrotask(() => {
+        setLive({
+          status: "fallback",
+          note: "No se pudo abrir el flujo firmado del servidor (/api/stream). Se usa el snapshot real local, firmado en tu navegador.",
+        });
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadServerCycle lee del store en el momento
+  }, [waitingServer, streamCycles, streamDown]);
+
+  const newerCycle = scenario === "live" && live.status === "server" && streamCycles > live.cycle && stream.lastBatches.length > 0;
 
   const progress = snap.totalBatches ? snap.signed / snap.totalBatches : 0;
   const canRun = snap.ready;
 
   let scenarioNote: React.ReactNode;
-  if (scenario === "cafayate") {
+  if (scenario !== "live" && !local) {
+    scenarioNote = localError ? (
+      <span className="text-amber">No se pudo cargar el snapshot local. Probá con «FIRMS en vivo» o recargá la página.</span>
+    ) : (
+      "Cargando el snapshot local…"
+    );
+  } else if (scenario === "cafayate" && local) {
     scenarioNote = (
       <>
         <strong className="font-semibold text-amber">Reconstrucción sintética, no son datos satelitales reales.</strong>{" "}
         {local.cafayate.length} detecciones simuladas del {range(local.cafayate)} en torno a Cafayate y el Chaco salteño.
       </>
     );
-  } else if (scenario === "historico") {
+  } else if (scenario === "historico" && local) {
     scenarioNote = (
       <>
         Snapshot real de NASA FIRMS (VIIRS 375 m, NRT): {local.historico.length} detecciones del {range(local.historico)},
@@ -161,26 +204,35 @@ export function LiveDemo() {
       </>
     );
   } else if (live.status === "loading") {
-    scenarioNote = "Consultando /api/firms…";
-  } else if (live.status === "done") {
+    scenarioNote = "Esperando que termine el ciclo en curso del flujo firmado por el servidor…";
+  } else if (live.status === "server") {
     scenarioNote = (
       <>
-        La API devolvió <code className="font-mono text-cyan">source: &quot;{live.source}&quot;</code> con {live.count}{" "}
-        detecciones
-        {live.fetchedAt ? ` (${new Date(live.fetchedAt).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" })})` : ""}.{" "}
-        {live.source === "firms-live" ? "Datos NRT de las últimas 24 h." : <span className="text-amber">{live.note}</span>}
+        <strong className={`font-semibold ${live.live ? "text-cyan" : "text-amber"}`}>
+          {live.batches} lotes ya firmados por el servidor
+        </strong>{" "}
+        ({live.count} focos · {live.label}). Son los mismos que verificó el{" "}
+        <a href="#monitor" className="text-fire underline underline-offset-2 hover:text-bone">
+          monitor en tiempo real
+        </a>
+        : tu navegador sólo tiene la clave pública, así que cualquier cambio que hagas en la red rompe la firma.
       </>
     );
-  } else if (live.status === "error") {
+  } else if (live.status === "fallback") {
     scenarioNote = <span className="text-amber">{live.note}</span>;
   }
 
   return (
     <Shell id="demo">
-      <SectionHeading title="Firmá, atacá y verificá un flujo de focos en vivo">
+      <SectionHeading title="Firmá, atacá y verificá un flujo de focos">
         <p>
-          Todo corre en tu navegador. El recolector agrupa detecciones en lotes, los encadena y los firma con{" "}
-          {ALG}. Vos manejás la red: alterá, duplicá, suprimí, reordená o falsificá lotes y mirá qué llega al mapa.
+          Sandbox de ataques. El recolector agrupa detecciones en lotes, los encadena y los firma con {ALG}. Vos manejás la
+          red: alterá, duplicá, suprimí, reordená o falsificá lotes y mirá qué llega al mapa. Los escenarios locales se firman
+          en tu navegador; «FIRMS en vivo» reproduce los lotes que firmó el servidor para el{" "}
+          <a href="#monitor" className="text-fire underline underline-offset-2 hover:text-bone">
+            monitor en tiempo real
+          </a>
+          .
         </p>
       </SectionHeading>
 
@@ -200,7 +252,11 @@ export function LiveDemo() {
                 Velocidad
                 <Segmented label="Velocidad" options={SPEEDS} value={snap.speed} onChange={(v) => engine.setSpeed(v)} />
               </div>
-              <div className="flex items-center gap-2 text-[0.8125rem] text-ash">
+              <fieldset
+                disabled={snap.presigned}
+                className="flex min-w-0 items-center gap-2 text-[0.8125rem] text-ash disabled:opacity-40"
+                title={snap.presigned ? "El tamaño de lote lo fijó el servidor al firmar" : undefined}
+              >
                 Focos por lote
                 <Segmented
                   label="Focos por lote"
@@ -208,12 +264,21 @@ export function LiveDemo() {
                   value={snap.batchSize}
                   onChange={(v) => engine.setBatchSize(v)}
                 />
-              </div>
+              </fieldset>
             </div>
           </div>
 
           <p className="min-h-5 max-w-[80ch] text-[0.8125rem] leading-snug text-ash" aria-live="polite">
             {scenarioNote}
+            {newerCycle && (
+              <button
+                type="button"
+                onClick={loadServerCycle}
+                className="ml-2 inline-flex min-h-7 items-center rounded-sm border border-cyan/50 px-2 text-[0.75rem] font-medium text-cyan transition-colors hover:bg-cyan hover:text-ink"
+              >
+                Hay un ciclo más nuevo: cargarlo
+              </button>
+            )}
           </p>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -248,7 +313,7 @@ export function LiveDemo() {
                 role="progressbar"
                 aria-label="Lotes firmados"
                 aria-valuemin={0}
-                aria-valuemax={snap.totalBatches}
+                aria-valuemax={Math.max(1, snap.totalBatches)}
                 aria-valuenow={snap.signed}
               >
                 <motion.div
@@ -271,7 +336,7 @@ export function LiveDemo() {
         <div className="grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
           <div className="flex flex-col border-b border-line lg:border-b-0 lg:border-r">
             <div className="relative h-[22rem] sm:h-[28rem] lg:h-auto lg:min-h-[34rem] lg:flex-1">
-              <FireMap points={snap.points} focus={scenario === "cafayate" ? "cafayate" : "salta"} />
+              <LazyMap points={snap.points} focus={scenario === "cafayate" ? "cafayate" : "salta"} />
               <div className="pointer-events-none absolute left-3 top-3 rounded-sm bg-ink/85 px-2.5 py-1.5 font-mono text-[0.6875rem] text-bone">
                 {snap.points.length} focos trazados
               </div>
@@ -292,7 +357,9 @@ export function LiveDemo() {
         {/* Identidad de la clave */}
         <div className="flex flex-col gap-x-8 gap-y-3 border-t border-line px-4 py-4 sm:px-5 lg:flex-row lg:items-center">
           <div className="min-w-0">
-            <div className="text-[0.75rem] text-ash">Clave pública del recolector (key_id)</div>
+            <div className="text-[0.75rem] text-ash">
+              Clave pública del recolector{snap.presigned ? " del servidor" : ""} (key_id)
+            </div>
             <div className="mt-1 break-all font-mono text-sm text-cyan">{snap.keyId ?? "generando clave…"}</div>
           </div>
           <div className="font-mono text-xs leading-relaxed text-ash">
@@ -305,6 +372,12 @@ export function LiveDemo() {
               <>
                 Derivada de la semilla del <a href="#cuantica" className="text-violet underline underline-offset-2">QRNG simulado</a>. Es
                 una semilla pública, sólo para la demo.
+              </>
+            )}
+            {snap.keyOrigin === "server" && (
+              <>
+                Clave pública del recolector del servidor (<code className="font-mono text-cyan">/api/collector</code>). La clave
+                secreta nunca llega al navegador.
               </>
             )}
             {snap.keyOrigin === "random" && keyError && (

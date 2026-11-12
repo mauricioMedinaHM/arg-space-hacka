@@ -1,0 +1,96 @@
+/* Popups y marcadores de viento del mapa de focos (tema sala de control). */
+.maplibregl-popup.fire-popup {
+  max-width: min(17rem, 82vw) !important;
+  z-index: 3;
+}
+.fire-popup .maplibregl-popup-content {
+  background: #131110;
+  color: #f3eee6;
+  border: 1px solid #4a433c;
+  border-radius: 6px;
+  padding: 0.75rem 0.875rem;
+  box-shadow: 0 18px 40px -16px rgb(0 0 0 / 0.95);
+  font-family: var(--font-sans);
+}
+.fire-popup .maplibregl-popup-tip {
+  display: none;
+}
+.fire-popup .maplibregl-popup-close-button {
+  width: 1.75rem;
+  height: 1.75rem;
+  color: #b9b1a5;
+  font-size: 1.125rem;
+  line-height: 1;
+  border-radius: 4px;
+}
+.fire-popup .maplibregl-popup-close-button:hover {
+  background: #1c1916;
+  color: #f3eee6;
+}
+.fire-popup__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-right: 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.fire-popup__dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  flex: none;
+  border-radius: 50%;
+}
+.fire-popup__status {
+  margin-top: 0.375rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+}
+.fire-popup__grid {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.25rem 0.75rem;
+  margin-top: 0.625rem;
+  font-size: 0.75rem;
+}
+.fire-popup__grid dt {
+  color: #938b80;
+}
+.fire-popup__grid dd {
+  font-family: var(--font-mono);
+  color: #f3eee6;
+}
+
+.wind-mark {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  pointer-events: none;
+  font: 500 10px var(--font-mono);
+  letter-spacing: 0.06em;
+  color: #cfeff2;
+  white-space: nowrap;
+}
+.wind-mark__label {
+  background: rgb(11 10 9 / 0.82);
+  border: 1px solid rgb(69 217 227 / 0.35);
+  border-radius: 2px;
+  padding: 1px 5px;
+}
+.wind-mark svg {
+  flex: none;
+  filter: drop-shadow(0 0 2px rgb(11 10 9 / 0.9));
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* En mapas angostos sólo queda la flecha: las etiquetas taparían los focos. */
+@media (max-width: 640px) {
+  .wind-mark__label {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wind-mark svg {
+    transition: none;
+  }
+}

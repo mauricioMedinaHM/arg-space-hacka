@@ -27,6 +27,12 @@ export interface BatchPayload {
   created_at: string;      // ISO
   key_id: string;          // hex primeros 16 bytes de SHA3-256(publicKey)
   detections: FireDetection[];
+  /**
+   * Opcional (aditivo): total de lotes de la sesión, declarado DENTRO del payload firmado.
+   * Permite al verificador detectar que se suprimieron los últimos lotes (`Verifier.finalize()`),
+   * cosa que la secuencia sola no delata. Si falta, el lote es idéntico al contrato anterior.
+   */
+  total_batches?: number;
 }
 
 /** Lote firmado con ML-DSA-65 (FIPS 204). */

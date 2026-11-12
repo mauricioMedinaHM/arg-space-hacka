@@ -94,6 +94,7 @@ def run() -> dict:
         "iterations": iterations,
         "optimal_k": optimal_k,
         "optimal_k_theory": math.floor(math.pi / 4 * math.sqrt(big_n)),
+        # Aproximación habitual N/2; el valor exacto de la búsqueda sin reposición es (N+1)/2 = 8,5.
         "classical_expected_queries": big_n / 2,
         "quantum_queries": round(math.pi / 4 * math.sqrt(big_n), 4),
         "interpretation": (

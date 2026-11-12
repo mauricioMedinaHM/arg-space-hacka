@@ -12,10 +12,11 @@ export function MetricsBar({ m }: { m: Metrics }) {
     { label: "Perdidos", value: m.lost, tone: "amber" },
     { label: "Reordenados", value: m.reordered, tone: "amber" },
     { label: "Falsificados", value: m.forged, tone: "bad" },
+    { label: "Cadena rota", value: m.chain, tone: "bad" },
     { label: "Verificación media", value: m.avgVerifyMs, decimals: 2, unit: "ms", tone: "cyan" },
   ];
   return (
-    <dl className="grid grid-cols-2 gap-px bg-line sm:grid-cols-4 xl:grid-cols-8">
+    <dl className="grid grid-cols-3 gap-px bg-line lg:grid-cols-9">
       {cells.map((c) => {
         const lit = c.value > 0 && c.tone;
         return (

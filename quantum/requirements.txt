@@ -1,5 +1,6 @@
-qiskit>=2.0,<3
-qiskit-aer>=0.17
-qiskit-ibm-runtime
-scipy
-numpy
+# Versiones probadas (ver README). Se acotan para que run_all.py sea reproducible.
+qiskit>=2.6,<3
+qiskit-aer>=0.18,<0.19
+qiskit-ibm-runtime>=0.52,<0.53   # solo por los backends falsos (modelo de ruido local); nunca se conecta a IBM
+scipy>=1.14,<2
+numpy>=2,<3

@@ -5,7 +5,11 @@ import { useEffect } from "react";
 const nf = (decimals: number) =>
   new Intl.NumberFormat("es-AR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
-/** Contador que interpola hacia `value`. Con movimiento reducido salta directo. */
+/**
+ * Contador que interpola hacia `value`. Con movimiento reducido salta directo.
+ * La cifra animada va con aria-hidden y el valor final en un span sólo para lectores de pantalla:
+ * así una región aria-live anuncia una vez el número definitivo y no cada cuadro intermedio.
+ */
 export function AnimatedNumber({ value, decimals = 0 }: { value: number; decimals?: number }) {
   const reduce = useReducedMotion();
   const mv = useMotionValue(0);
@@ -20,5 +24,12 @@ export function AnimatedNumber({ value, decimals = 0 }: { value: number; decimal
     return () => controls.stop();
   }, [value, reduce, mv]);
 
-  return <motion.span className="tabular-nums">{text}</motion.span>;
+  return (
+    <>
+      <motion.span aria-hidden className="tabular-nums">
+        {text}
+      </motion.span>
+      <span className="sr-only">{nf(decimals).format(value)}</span>
+    </>
+  );
 }

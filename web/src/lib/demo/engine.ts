@@ -5,6 +5,12 @@ import { toBatches } from "../firms";
 
 export type PointStatus = "ok" | "bad" | "reordered";
 
+/** Datos de la detección para el popup del mapa. */
+export type PointInfo = Pick<
+  FireDetection,
+  "satellite" | "instrument" | "acq_date" | "acq_time" | "confidence" | "daynight" | "source"
+> & { seq?: number };
+
 export interface MapPoint {
   key: string;
   lng: number;
@@ -12,6 +18,20 @@ export interface MapPoint {
   frp: number;
   status: PointStatus;
   fresh: boolean;
+  info?: PointInfo;
+}
+
+export function pointInfo(d: FireDetection, seq?: number): PointInfo {
+  return {
+    satellite: d.satellite,
+    instrument: d.instrument,
+    acq_date: d.acq_date,
+    acq_time: d.acq_time,
+    confidence: d.confidence,
+    daynight: d.daynight,
+    source: d.source,
+    seq,
+  };
 }
 
 export interface QueueItem {
@@ -32,11 +52,14 @@ export interface Metrics {
   lost: number;
   reordered: number;
   forged: number;
+  /** Firma válida pero fuera de la cadena (bifurcación u otro flujo): no cuenta como válido. */
+  chain: number;
   avgVerifyMs: number;
   avgSignMs: number;
 }
 
-export type KeyOrigin = "qrng" | "random";
+/** "server": lotes ya firmados por el recolector del servidor (se verifican con su clave pública). */
+export type KeyOrigin = "qrng" | "random" | "server";
 
 export interface DemoSnapshot {
   ready: boolean;
@@ -55,6 +78,8 @@ export interface DemoSnapshot {
   missing: number[];
   keyId: string | null;
   keyOrigin: KeyOrigin | null;
+  /** true si el flujo son lotes ya firmados por el servidor (no se re-firma en el navegador). */
+  presigned: boolean;
 }
 
 /** Lotes que la "red" retiene en vuelo para que se puedan atacar antes de entregarse. */
@@ -72,6 +97,7 @@ const ZERO: Metrics = {
   lost: 0,
   reordered: 0,
   forged: 0,
+  chain: 0,
   avgVerifyMs: 0,
   avgSignMs: 0,
 };
@@ -80,12 +106,12 @@ function pointStatusOf(status: IntegrityStatus): PointStatus | null {
   switch (status) {
     case "ok":
     case "gap":
-    case "broken_chain":
       return "ok";
     case "reordered":
       return "reordered";
     case "tampered":
     case "unknown_key":
+    case "broken_chain":
       return "bad";
     case "duplicate":
       return null;
@@ -100,6 +126,8 @@ export class DemoEngine {
   private verifier: Verifier | null = null;
   private detections: FireDetection[] = [];
   private source: FireDetection[][] = [];
+  /** Lotes ya firmados por el servidor; si no es null, reemplazan al recolector local. */
+  private presigned: { batches: SignedBatch[]; publicKey: Uint8Array; keyId: string } | null = null;
   private cursor = 0;
   private queue: QueueItem[] = [];
   private armed: AttackKind[] = [];
@@ -132,14 +160,26 @@ export class DemoEngine {
   }
 
   load(detections: FireDetection[]) {
+    this.presigned = null;
     this.detections = detections;
+    this.rebuild();
+  }
+
+  /**
+   * Carga lotes que ya firmó el servidor. La "red" sigue siendo atacable, pero el navegador
+   * no tiene la clave secreta: sólo verifica con `publicKey`.
+   */
+  loadSigned(batches: SignedBatch[], publicKey: Uint8Array, keyId: string) {
+    this.presigned = { batches, publicKey, keyId };
+    this.detections = batches.flatMap((b) => b.payload.detections);
     this.rebuild();
   }
 
   setBatchSize(n: number) {
     if (n === this.batchSize) return;
     this.batchSize = n;
-    this.rebuild();
+    if (this.presigned) this.emit(); // el tamaño de lote lo fijó el servidor al firmar
+    else this.rebuild();
   }
 
   setSpeed(s: number) {
@@ -149,7 +189,7 @@ export class DemoEngine {
   }
 
   play() {
-    if (!this.collector || this.playing) return;
+    if (!this.verifier || this.playing) return;
     if (this.done) this.rebuild();
     this.playing = true;
     this.tick();
@@ -163,7 +203,7 @@ export class DemoEngine {
   }
 
   step() {
-    if (!this.collector || this.done) return;
+    if (!this.verifier || this.done) return;
     this.pause();
     this.tick();
   }
@@ -173,7 +213,7 @@ export class DemoEngine {
   }
 
   inject(kind: AttackKind) {
-    if (!this.collector || this.done) return;
+    if (!this.verifier || this.done) return;
     this.armed.push(kind);
     this.applyArmed();
     this.emit();
@@ -196,10 +236,17 @@ export class DemoEngine {
     this.counts = { ...ZERO };
     this.signMs = 0;
     this.verifyMs = 0;
-    this.source = toBatches(this.detections, this.batchSize);
-    if (this.kp) {
-      this.collector = new Collector({ keyPair: this.kp });
-      this.verifier = new Verifier([this.kp.publicKey]);
+    if (this.presigned) {
+      this.source = this.presigned.batches.map((b) => b.payload.detections);
+      this.collector = null;
+      this.verifier = new Verifier([this.presigned.publicKey]);
+    } else {
+      this.source = toBatches(this.detections, this.batchSize);
+      // El total de la sesión va firmado en cada lote: así el verificador detecta un corte al final.
+      this.collector = this.kp
+        ? new Collector({ keyPair: this.kp, ...(this.source.length > 0 ? { totalBatches: this.source.length } : {}) })
+        : null;
+      this.verifier = this.kp ? new Verifier([this.kp.publicKey]) : null;
     }
     this.emit();
   }
@@ -224,11 +271,18 @@ export class DemoEngine {
   }
 
   private tick() {
-    if (!this.collector || !this.verifier) return;
+    if (!this.verifier) return;
     if (!this.exhausted()) {
-      const t = now();
-      const batch = this.collector.makeBatch(this.source[this.cursor]);
-      this.signMs += now() - t;
+      let batch: SignedBatch;
+      if (this.presigned) {
+        // Copia: los ataques mutan el lote en tránsito, no el original firmado por el servidor.
+        batch = structuredClone(this.presigned.batches[this.cursor]);
+      } else {
+        if (!this.collector) return;
+        const t = now();
+        batch = this.collector.makeBatch(this.source[this.cursor]);
+        this.signMs += now() - t;
+      }
       this.cursor += 1;
       this.queue.push({ uid: ++this.uid, batch });
     }
@@ -260,6 +314,14 @@ export class DemoEngine {
       const head = this.queue[0];
       if (!head || (kind === "reorder" && this.queue.length < 2)) {
         if (!this.exhausted()) pending.push(kind);
+        else {
+          this.event(
+            kind,
+            head
+              ? `No se aplicó: el lote #${head.batch.payload.seq} es el último y no tiene con quién intercambiarse.`
+              : "No se aplicó: ya no quedan lotes en tránsito.",
+          );
+        }
         continue;
       }
       const seq = head.batch.payload.seq;
@@ -305,8 +367,10 @@ export class DemoEngine {
     switch (res.status) {
       case "ok":
       case "gap":
-      case "broken_chain":
         c.valid += 1;
+        break;
+      case "broken_chain":
+        c.chain += 1;
         break;
       case "reordered":
         c.valid += 1;
@@ -333,6 +397,7 @@ export class DemoEngine {
           frp: d.frp,
           status: ps,
           fresh: true,
+          info: pointInfo(d, item.batch.payload.seq),
         });
       }
     }
@@ -342,9 +407,14 @@ export class DemoEngine {
 
   private build(): DemoSnapshot {
     const c = this.counts;
-    const missing = this.verifier?.missingSeqs ?? [];
+    // Al cerrar el flujo, finalize() suma los lotes cortados al FINAL (invisibles para la secuencia).
+    const missing = !this.verifier
+      ? []
+      : this.done
+        ? this.verifier.finalize(this.source.length).map((r) => r.seq)
+        : this.verifier.missingSeqs;
     return {
-      ready: !!this.collector && this.source.length > 0,
+      ready: !!this.verifier && this.source.length > 0,
       playing: this.playing,
       done: this.done,
       speed: this.speed,
@@ -360,11 +430,12 @@ export class DemoEngine {
         ...c,
         lost: missing.length,
         avgVerifyMs: c.received ? this.verifyMs / c.received : 0,
-        avgSignMs: this.cursor ? this.signMs / this.cursor : 0,
+        avgSignMs: this.cursor && !this.presigned ? this.signMs / this.cursor : 0,
       },
       missing,
-      keyId: this.kp?.keyId ?? null,
-      keyOrigin: this.keyOrigin,
+      keyId: this.presigned ? this.presigned.keyId : (this.kp?.keyId ?? null),
+      keyOrigin: this.presigned ? "server" : this.keyOrigin,
+      presigned: !!this.presigned,
     };
   }
 

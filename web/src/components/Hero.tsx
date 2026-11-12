@@ -1,6 +1,7 @@
 "use client";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
+import { useReducedMotionSafe } from "@/components/ui/useReducedMotionSafe";
 import { ArrowDownIcon, CheckIcon, CrossIcon, ExternalIcon } from "@/components/ui/icons";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -30,7 +31,7 @@ const EMBERS = Array.from({ length: 30 }, (_, i) => ({
 }));
 
 function Embers() {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
       <div className="absolute inset-x-0 bottom-0 h-[55%] bg-[radial-gradient(ellipse_70%_100%_at_30%_100%,rgb(255_106_31/0.22),transparent_70%)]" />
@@ -40,13 +41,16 @@ function Embers() {
           key={e.id}
           className={`absolute bottom-0 rounded-full ${e.hot ? "bg-amber" : "bg-fire"}`}
           style={{ left: `${e.left}%`, width: e.size, height: e.size }}
-          initial={{ opacity: reduce ? 0.5 : 0, y: reduce ? -e.rise * 0.4 : 0 }}
+          // Mismo estado inicial en servidor y cliente; la preferencia sólo cambia `animate`.
+          initial={{ opacity: 0, y: 0 }}
           animate={
             reduce
-              ? undefined
+              ? { opacity: 0.5, y: -e.rise * 0.4, x: 0, scale: 1 }
               : { y: [0, -e.rise], x: [0, e.drift * 0.4, e.drift], opacity: [0, 0.9, 0.7, 0], scale: [1, 1, 0.4] }
           }
-          transition={{ duration: e.duration, delay: e.delay, repeat: Infinity, ease: "easeOut" }}
+          transition={
+            reduce ? { duration: 0 } : { duration: e.duration, delay: e.delay, repeat: Infinity, ease: "easeOut" }
+          }
         />
       ))}
     </div>
@@ -62,7 +66,7 @@ const hx = (n: number, len = 10) => {
 };
 
 function ChainTicker() {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const [head, setHead] = useState(41);
   useEffect(() => {
     if (reduce) return;
@@ -118,6 +122,10 @@ function ChainTicker() {
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } } };
 const item = { hidden: { opacity: 0, y: 22 }, show: { opacity: 1, y: 0, transition: { duration: 0.9, ease } } };
+// Título y bajada son el LCP: entran sólo con desplazamiento, nunca con opacity 0. Si el HTML del
+// servidor los trae invisibles, el LCP espera a la hidratación + la animación (medido: ~1,1 s contra
+// ~0,06 s de FCP) y sin JavaScript no se ven nunca.
+const lead = { hidden: { y: 22 }, show: { y: 0, transition: { duration: 0.9, ease } } };
 
 export function Hero() {
   return (
@@ -125,25 +133,26 @@ export function Hero() {
       <Embers />
       <div className="relative mx-auto grid w-full max-w-[1280px] items-center gap-12 px-4 pb-20 pt-14 sm:px-6 md:pb-28 md:pt-20 lg:min-h-[calc(100dvh-3.5rem)] lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.75fr)] lg:px-10">
         <motion.div variants={container} initial="hidden" animate="show">
-          <motion.h1 variants={item} className="display text-[clamp(2.1rem,5vw,4.25rem)]">
+          <motion.h1 variants={lead} className="display text-[clamp(2.1rem,5vw,4.25rem)]">
             Cadena de custodia <span className="whitespace-nowrap text-cyan">post-cuántica</span> para focos de incendio en{" "}
             <span className="text-fire">Salta</span>
           </motion.h1>
-          <motion.p variants={item} className="prose-measure mt-7 text-[1.0625rem] leading-relaxed text-ash md:text-lg">
-            El 14 de junio de 2026 el Gobierno de Salta informó un incendio forestal en Cafayate: más de 50 hectáreas
-            de bosque nativo afectadas y guardia por riesgo de reinicio. Los focos que detecta NASA FIRMS pasan por
+          <motion.p variants={lead} className="prose-measure mt-7 text-[1.0625rem] leading-relaxed text-ash md:text-lg">
+            En junio de 2026 un incendio forestal en Cafayate afectó primero más de 50 hectáreas de bosque nativo
+            y, tras reactivarse con viento Zonda, cerca de 200 ha de algarrobales. Los focos que detecta NASA FIRMS pasan por
             varias manos antes de llegar a quien coordina. Acá cada lote viaja firmado con ML-DSA-65, y cualquier
             alteración, pérdida o falsificación en el camino queda a la vista.
           </motion.p>
           <motion.p variants={item} className="mt-4 text-sm text-smoke">
             Fuente:{" "}
             <a
-              href="https://www.salta.gob.ar"
+              href="https://www.lagaceta.com.ar/nota/1142540/sociedad/incendio-cafayate-mas-200-hectareas-afectadas-continuan-operativos-para-evitar-rebrotes.html"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1 text-ash underline decoration-line-strong underline-offset-4 transition-colors hover:text-bone"
             >
-              Gobierno de Salta, 14/06/2026 <ExternalIcon width={12} height={12} />
+              La Gaceta, junio 2026 <ExternalIcon width={12} height={12} />
+              <span className="sr-only">(se abre en una pestaña nueva)</span>
             </a>
           </motion.p>
           <motion.div variants={item} className="mt-9 flex flex-wrap items-center gap-3">

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { DemoEngine } from "../demo/engine";
 import { generateKeyPair } from "../pipeline";
-import { loadHistorical } from "../firms";
+import { loadHistorical } from "../firms-historical";
 
 const kp = generateKeyPair(new Uint8Array(32).fill(9));
 const dets = loadHistorical().slice(0, 120);
