@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+/* Tema único: sala de control nocturna. Se fuerza oscuro (color-scheme: dark). */
+@theme {
+  --color-ink: #0b0a09;
+  --color-coal: #131110;
+  --color-char: #1c1916;
+  --color-line: #2c2824;
+  --color-line-strong: #4a433c;
+  --color-bone: #f3eee6;
+  --color-ash: #b9b1a5;
+  --color-smoke: #938b80;
+  --color-fire: #ff6a1f;
+  --color-amber: #ffb52e;
+  --color-cyan: #45d9e3;
+  --color-violet: #ab94ff;
+  --color-ok: #4bd58f;
+  --color-bad: #ff5263;
+
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@theme inline {
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 4.5rem;
+  overflow-x: clip;
+  background: var(--color-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-bone);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+  overflow-x: clip;
+}
+
+::selection {
+  background: var(--color-fire);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-cyan);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Voz de display: Archivo expandida. */
+.display {
+  font-stretch: 118%;
+  font-weight: 650;
+  letter-spacing: -0.022em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.prose-measure {
+  max-width: 68ch;
+  text-wrap: pretty;
+}
+
+/* Etiquetas de instrumento: mono para datos y medidas. */
+.readout {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+
+/* MapLibre: integra los controles al tema. */
+.maplibregl-map {
+  font-family: var(--font-mono);
+  background: #0d0c0b;
+}
+.maplibregl-ctrl-group {
+  background: var(--color-coal) !important;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 4px !important;
+  box-shadow: 0 6px 18px -8px rgb(0 0 0 / 0.8) !important;
+}
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--color-line) !important;
+}
+.maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(0.9);
+}
+.maplibregl-ctrl-attrib {
+  background: rgb(11 10 9 / 0.78) !important;
+  color: var(--color-ash);
+  font-size: 10px;
+}
+.maplibregl-ctrl-attrib a {
+  color: var(--color-ash) !important;
+}
+.maplibregl-ctrl-attrib-button {
+  filter: invert(0.85);
+}
+.maplibregl-cooperative-gesture-screen {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+/* Diagramas de circuito Qiskit: una sola fuente mono del sistema para que los caracteres de caja alineen. */
+.circuit {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", monospace;
+  font-size: 0.6875rem;
+  line-height: 1.25;
+  white-space: pre;
+  font-variant-ligatures: none;
+}

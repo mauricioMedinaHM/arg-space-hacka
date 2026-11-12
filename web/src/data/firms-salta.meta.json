@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-11-12T13:42:49.399Z",
+  "real_fetched_at": "2026-11-12T13:42:43.343Z",
+  "real_fetch_ok": true,
+  "real_total_in_bbox": 1084,
+  "real_date_range": [
+    "2026-11-05",
+    "2026-11-12"
+  ],
+  "real_fetch_report": [
+    {
+      "name": "VIIRS S-NPP C2 7d",
+      "url": "https://firms.modaps.eosdis.nasa.gov/data/active_fire/suomi-npp-viirs-c2/csv/SUOMI_VIIRS_C2_South_America_7d.csv",
+      "ok": true,
+      "rows_south_america": 0,
+      "rows_salta_bbox": 0
+    },
+    {
+      "name": "VIIRS NOAA-20 C2 7d",
+      "url": "https://firms.modaps.eosdis.nasa.gov/data/active_fire/noaa-20-viirs-c2/csv/J1_VIIRS_C2_South_America_7d.csv",
+      "ok": true,
+      "rows_south_america": 60271,
+      "rows_salta_bbox": 529
+    },
+    {
+      "name": "VIIRS NOAA-21 C2 7d",
+      "url": "https://firms.modaps.eosdis.nasa.gov/data/active_fire/noaa-21-viirs-c2/csv/J2_VIIRS_C2_South_America_7d.csv",
+      "ok": true,
+      "rows_south_america": 62201,
+      "rows_salta_bbox": 555
+    }
+  ],
+  "total": 535,
+  "counts_by_source": {
+    "synthetic": 135,
+    "historical": 400
+  },
+  "counts_synthetic": {
+    "cafayate_2026_06": 101,
+    "chaco_salteno": 34
+  },
+  "bbox": {
+    "west": -68.6,
+    "south": -26.5,
+    "east": -62.3,
+    "north": -22
+  },
+  "sources": [
+    {
+      "kind": "historical",
+      "name": "NASA FIRMS VIIRS S-NPP C2 7d (NRT, Sudamérica)",
+      "url": "https://firms.modaps.eosdis.nasa.gov/data/active_fire/suomi-npp-viirs-c2/csv/SUOMI_VIIRS_C2_South_America_7d.csv"
+    },
+    {
+      "kind": "historical",
+      "name": "NASA FIRMS VIIRS NOAA-20 C2 7d (NRT, Sudamérica)",
+      "url": "https://firms.modaps.eosdis.nasa.gov/data/active_fire/noaa-20-viirs-c2/csv/J1_VIIRS_C2_South_America_7d.csv"
+    },
+    {
+      "kind": "historical",
+      "name": "NASA FIRMS VIIRS NOAA-21 C2 7d (NRT, Sudamérica)",
+      "url": "https://firms.modaps.eosdis.nasa.gov/data/active_fire/noaa-21-viirs-c2/csv/J2_VIIRS_C2_South_America_7d.csv"
+    },
+    {
+      "kind": "synthetic",
+      "name": "Escenario Cafayate jun-2026 (reconstrucción sintética)",
+      "description": "Reconstrucción plausible, NO son datos satelitales reales. Basada en el incendio forestal informado por el Gobierno de Salta el 2026-06-14 (más de 50 ha de bosque nativo cerca de Cafayate, ~ -26.07, -65.97). Detecciones VIIRS simuladas del 2026-06-12 al 2026-06-16.",
+      "seed": 24183971878
+    },
+    {
+      "kind": "synthetic",
+      "name": "Quemas agrícolas dispersas en el Chaco salteño (sintético)",
+      "description": "Focos aislados simulados cerca de Tartagal, Orán y Anta en la misma ventana de fechas.",
+      "seed": 24183971878
+    }
+  ],
+  "notes": [
+    "Datos reales: snapshot congelado de NASA FIRMS (VIIRS 375 m, NRT) descargado el 2026-11-12T13:42:43.343Z; 1084 detecciones dentro del bbox, de las cuales se conservan 400 por muestreo determinista (tope 400). Se marcan como \"historical\" porque no se actualizan.",
+    "Las detecciones con source \"synthetic\" son simuladas con un PRNG de semilla fija (reproducibles) y sirven solo para la demo de integridad; no deben interpretarse como observaciones reales.",
+    "El bbox es un rectángulo aproximado de la provincia de Salta: incluye porciones de Jujuy, Tucumán, Catamarca, Santiago del Estero, Chaco, Formosa y zonas limítrofes de Chile, Bolivia y Paraguay.",
+    "Limitación FIRMS: nubes, humo denso o el dosel del bosque pueden ocultar focos activos (omisiones).",
+    "Limitación FIRMS: los incendios que se inician y se apagan entre dos pasadas del satélite no se detectan.",
+    "Limitación FIRMS: un foco de calor (hotspot) NO es el perímetro del incendio; indica el centro de un píxel con anomalía térmica, no el área quemada.",
+    "Limitación FIRMS: los datos NRT tienen una latencia aproximada de 3 horas desde la observación.",
+    "Limitación FIRMS: el píxel VIIRS es de ~375 m en el nadir (crece hacia el borde de la pasada); la posición del foco tiene esa incertidumbre.",
+    "También pueden aparecer falsos positivos (superficies muy calientes, reflejos solares, actividad industrial o volcánica).",
+    "La firma ML-DSA-65 garantiza integridad y autenticidad del lote transmitido, no la veracidad física de la detección."
+  ]
+}

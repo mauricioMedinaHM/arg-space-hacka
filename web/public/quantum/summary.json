@@ -1,0 +1,54 @@
+{
+  "generated_at": "2026-11-12T13:42:27Z",
+  "qiskit_version": "2.6.2",
+  "aer_version": "0.18.2",
+  "qiskit_ibm_runtime_version": "0.52.1",
+  "python_version": "3.12.14",
+  "backend": "aer_simulator",
+  "simulated": true,
+  "scripts": [
+    {
+      "script": "quantum/qrng.py",
+      "output": "qrng.json",
+      "description": "QRNG simulado (Hadamard + medición) que produce la semilla de 32 bytes de la clave ML-DSA-65 del recolector."
+    },
+    {
+      "script": "quantum/grover.py",
+      "output": "grover.json",
+      "description": "Grover en 4 qubits: ventaja solo cuadrática contra preimágenes de hash; SHA3-256 se mantiene."
+    },
+    {
+      "script": "quantum/shor.py",
+      "output": "shor.json",
+      "description": "Shor (búsqueda de orden) para N=15, a=7: por qué RSA/ECC no sobreviven y se usa ML-DSA."
+    },
+    {
+      "script": "quantum/run_all.py",
+      "output": "summary.json",
+      "description": "Ejecuta todo y escribe los JSON en web/public/quantum/."
+    }
+  ],
+  "highlights": {
+    "qrng_seed_hex": "f09db4a5de8aa457596c6642331d321937792aa5b913ea6566c461a21696504f",
+    "qrng_entropy_bits_per_bit": 0.999995,
+    "qrng_p_value": 0.483811,
+    "qrng_noise_model": "fake_sherbrooke",
+    "grover_target": "1011",
+    "grover_optimal_k": 3,
+    "grover_p_success": 0.956543,
+    "shor_period": 4,
+    "shor_factors": [
+      3,
+      5
+    ]
+  },
+  "notes": [
+    "Todo se ejecutó en simuladores locales (qiskit-aer). No se usó hardware real de IBM Quantum.",
+    "Esto NO es QKD (distribución cuántica de claves): no hay canal cuántico ni intercambio de claves. La integridad de los datos la da la firma post-cuántica ML-DSA-65 (FIPS 204) sobre hashes SHA3-256.",
+    "El QRNG es simulado: Aer usa un PRNG clásico por debajo, así que la semilla es pseudoaleatoria. Es una demostración didáctica del flujo QRNG -> semilla -> clave ML-DSA. En producción se usaría un QRNG de hardware certificado o el CSPRNG del sistema operativo.",
+    "La semilla publicada en qrng.json es pública y solo sirve para la demo; una clave real nunca debe derivarse de una semilla publicada.",
+    "El modelo de ruido (si está presente) proviene de un backend falso de qiskit-ibm-runtime: una calibración guardada localmente, sin conexión a IBM.",
+    "Shor con N=15 es un ejemplo de juguete: romper RSA-2048 requiere millones de qubits físicos con corrección de errores, que hoy no existen. La amenaza práctica es 'cosechar ahora, falsificar/descifrar después', por eso se migra ya a criptografía post-cuántica.",
+    "Grover solo ofrece aceleración cuadrática: SHA3-256 conserva ~128 bits de seguridad frente a preimágenes cuánticas; no hace falta reemplazar el hash."
+  ]
+}
