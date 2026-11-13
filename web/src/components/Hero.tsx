@@ -2,11 +2,12 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useReducedMotionSafe } from "@/components/ui/useReducedMotionSafe";
-import { ArrowDownIcon, CheckIcon, CrossIcon, ExternalIcon } from "@/components/ui/icons";
+import { BocaStar, StarRow } from "@/components/ui/BocaStar";
+import { ArrowDownIcon, CheckIcon, CrossIcon } from "@/components/ui/icons";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
-// PRNG determinista: mismas brasas en servidor y cliente (sin desajuste de hidratación).
+// PRNG determinista: mismas estrellas en servidor y cliente (sin desajuste de hidratación).
 function mulberry32(seed: number) {
   let a = seed;
   return () => {
@@ -18,46 +19,43 @@ function mulberry32(seed: number) {
   };
 }
 
-const rnd = mulberry32(20260614);
-const EMBERS = Array.from({ length: 30 }, (_, i) => ({
+const rnd = mulberry32(1905);
+const STARS = Array.from({ length: 22 }, (_, i) => ({
   id: i,
   left: +(rnd() * 100).toFixed(2),
-  size: +(1.5 + rnd() * 3.5).toFixed(2),
-  rise: Math.round(320 + rnd() * 520),
-  drift: Math.round((rnd() - 0.5) * 160),
-  duration: +(6 + rnd() * 9).toFixed(2),
-  delay: +(rnd() * 10).toFixed(2),
-  hot: rnd() > 0.7,
+  top: +(rnd() * 100).toFixed(2),
+  size: Math.round(7 + rnd() * 15),
+  base: +(0.1 + rnd() * 0.22).toFixed(2),
+  duration: +(3 + rnd() * 5).toFixed(2),
+  delay: +(rnd() * 6).toFixed(2),
+  rotate: Math.round(rnd() * 72),
 }));
 
-function Embers() {
+/** Cielo de estrellas de cinco puntas sobre una franja azul. Decorativo. */
+function StarField() {
   const reduce = useReducedMotionSafe();
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute inset-x-0 bottom-0 h-[55%] bg-[radial-gradient(ellipse_70%_100%_at_30%_100%,rgb(255_106_31/0.22),transparent_70%)]" />
-      <div className="absolute inset-x-0 bottom-0 h-px bg-fire/50" />
-      {EMBERS.map((e) => (
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_90%_80%_at_75%_0%,var(--color-boca-deep),transparent_70%)]" />
+      <div className="absolute inset-x-0 bottom-0 h-px bg-gold/50" />
+      {STARS.map((s) => (
         <motion.span
-          key={e.id}
-          className={`absolute bottom-0 rounded-full ${e.hot ? "bg-amber" : "bg-fire"}`}
-          style={{ left: `${e.left}%`, width: e.size, height: e.size }}
+          key={s.id}
+          className="absolute text-gold"
+          style={{ left: `${s.left}%`, top: `${s.top}%`, rotate: s.rotate }}
           // Mismo estado inicial en servidor y cliente; la preferencia sólo cambia `animate`.
-          initial={{ opacity: 0, y: 0 }}
-          animate={
-            reduce
-              ? { opacity: 0.5, y: -e.rise * 0.4, x: 0, scale: 1 }
-              : { y: [0, -e.rise], x: [0, e.drift * 0.4, e.drift], opacity: [0, 0.9, 0.7, 0], scale: [1, 1, 0.4] }
-          }
-          transition={
-            reduce ? { duration: 0 } : { duration: e.duration, delay: e.delay, repeat: Infinity, ease: "easeOut" }
-          }
-        />
+          initial={{ opacity: s.base }}
+          animate={reduce ? { opacity: s.base } : { opacity: [s.base, s.base * 2.4, s.base], scale: [1, 1.18, 1] }}
+          transition={reduce ? { duration: 0 } : { duration: s.duration, delay: s.delay, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <BocaStar size={s.size} />
+        </motion.span>
       ))}
     </div>
   );
 }
 
-// Ilustración del encadenado (no son firmas reales; la demo de abajo sí firma).
+// Ilustración del encadenado (no son firmas reales; el monitor y el sandbox sí firman).
 const hx = (n: number, len = 10) => {
   const r = mulberry32(n * 7919 + 13);
   let s = "";
@@ -77,7 +75,7 @@ function ChainTicker() {
   const rows = [0, 1, 2, 3].map((i) => head - i);
   return (
     <div aria-hidden className="relative w-full max-w-[27rem] select-none">
-      <div className="mb-3 flex items-center justify-between font-mono text-[0.6875rem] text-smoke">
+      <div className="mb-3 flex items-center justify-between font-mono text-[0.6875rem] text-ash">
         <span>stream salta-firms-viirs</span>
         <span>ML-DSA-65 · SHA3-256</span>
       </div>
@@ -93,12 +91,15 @@ function ChainTicker() {
                 animate={{ opacity: 1 - i * 0.22, y: 0, filter: "blur(0px)" }}
                 exit={{ opacity: 0, y: 20 }}
                 transition={{ duration: 0.7, ease }}
-                className={`rounded-md border bg-coal/90 px-4 py-3 font-mono text-xs shadow-[0_18px_30px_-18px_rgb(0_0_0/0.9)] ${
+                className={`rounded-md border bg-coal/90 px-4 py-3 font-mono text-xs shadow-[0_18px_30px_-18px_var(--color-ink)] ${
                   bad ? "border-bad/70" : "border-line-strong"
                 }`}
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-medium text-bone">lote #{seq}</span>
+                  <span className="flex items-center gap-2 text-sm font-medium text-bone">
+                    <BocaStar size={11} filled={!bad} className={bad ? "text-bad" : "text-gold"} />
+                    lote #{seq}
+                  </span>
                   <span className={`inline-flex items-center gap-1.5 font-sans text-[0.75rem] font-semibold ${bad ? "text-bad" : "text-ok"}`}>
                     {bad ? <CrossIcon width={12} height={12} /> : <CheckIcon width={12} height={12} />}
                     {bad ? "Alterado: firma inválida" : "Firma válida"}
@@ -108,89 +109,89 @@ function ChainTicker() {
                   <span>prev_hash</span>
                   <span className="truncate text-ash">{hx(seq - 1)}…</span>
                   <span>hash</span>
-                  <span className={`truncate ${bad ? "text-bad" : "text-cyan"}`}>{hx(seq)}…</span>
+                  <span className={`truncate ${bad ? "text-bad" : "text-azul-soft"}`}>{hx(seq)}…</span>
                 </div>
               </motion.li>
             );
           })}
         </AnimatePresence>
       </ol>
-      <p className="mt-3 font-sans text-[0.75rem] text-smoke">Ilustración del encadenado. La demo de abajo firma de verdad.</p>
+      <p className="mt-3 font-sans text-[0.75rem] text-ash">Ilustración del encadenado. El monitor y el sandbox firman de verdad.</p>
     </div>
   );
 }
 
-const container = { hidden: {}, show: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } } };
-const item = { hidden: { opacity: 0, y: 22 }, show: { opacity: 1, y: 0, transition: { duration: 0.9, ease } } };
-// Título y bajada son el LCP: entran sólo con desplazamiento, nunca con opacity 0. Si el HTML del
-// servidor los trae invisibles, el LCP espera a la hidratación + la animación (medido: ~1,1 s contra
-// ~0,06 s de FCP) y sin JavaScript no se ven nunca.
-const lead = { hidden: { y: 22 }, show: { y: 0, transition: { duration: 0.9, ease } } };
+const container = { hidden: {}, show: { transition: { staggerChildren: 0.09, delayChildren: 0.05 } } };
+// Todo el pliegue inicial entra sólo con desplazamiento, nunca con opacity 0: el título es el LCP y,
+// si el HTML del servidor lo trae invisible, espera a la hidratación (y sin JavaScript no se ve nunca).
+const lead = { hidden: { y: 20 }, show: { y: 0, transition: { duration: 0.9, ease } } };
+
+const ANSWERS = [
+  ["Problema", "datos de incendio que no se pueden comprobar"],
+  ["Solución", "cada lote firmado y encadenado"],
+  ["Cómo", "ML-DSA-65, verificado en tu navegador"],
+  ["Meta", "datos abiertos confiables, hoy y en la era cuántica"],
+] as const;
 
 export function Hero() {
   return (
     <section id="top" className="relative isolate overflow-hidden">
-      <Embers />
-      <div className="relative mx-auto grid w-full max-w-[1280px] items-center gap-12 px-4 pb-20 pt-14 sm:px-6 md:pb-28 md:pt-20 lg:min-h-[calc(100dvh-3.5rem)] lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.75fr)] lg:px-10">
+      <StarField />
+      <div className="relative mx-auto grid w-full max-w-[1280px] items-center gap-12 px-4 pb-14 pt-12 sm:px-6 md:pb-20 md:pt-16 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,0.75fr)] lg:px-10">
         <motion.div variants={container} initial="hidden" animate="show">
-          <motion.h1 variants={lead} className="display text-[clamp(2.1rem,5vw,4.25rem)]">
-            Cadena de custodia <span className="whitespace-nowrap text-cyan">post-cuántica</span> para focos de incendio en{" "}
-            <span className="text-fire">Salta</span>
+          <motion.p variants={lead} className="readout mb-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-gold">
+            <StarRow count={3} size={11} />
+            Incendios forestales · Salta, NOA
+          </motion.p>
+          <motion.h1 variants={lead} className="display text-[clamp(2.1rem,5.4vw,4.4rem)]">
+            Datos de incendios que nadie puede alterar <span className="text-gold">sin que se note</span>
           </motion.h1>
-          <motion.p variants={lead} className="prose-measure mt-7 text-[1.0625rem] leading-relaxed text-ash md:text-lg">
-            En junio de 2026 un incendio forestal en Cafayate afectó primero más de 50 hectáreas de bosque nativo
-            y, tras reactivarse con viento Zonda, cerca de 200 ha de algarrobales. Los focos que detecta NASA FIRMS pasan por
-            varias manos antes de llegar a quien coordina. Acá cada lote viaja firmado con ML-DSA-65, y cualquier
-            alteración, pérdida o falsificación en el camino queda a la vista.
+          <motion.p variants={lead} className="prose-measure mt-6 text-[1.0625rem] leading-relaxed text-ash md:text-xl md:leading-relaxed">
+            Los focos que el satélite detecta sobre Salta pasan por muchas manos antes de llegar a quien coordina. Acá cada
+            lote viaja con una <strong className="font-semibold text-bone">firma post-cuántica</strong> y tu navegador la
+            comprueba antes de dibujar un solo punto en el mapa.
           </motion.p>
-          <motion.p variants={item} className="mt-4 text-sm text-smoke">
-            Fuente:{" "}
+          <motion.div variants={lead} className="mt-8 flex flex-wrap items-center gap-3">
             <a
-              href="https://www.lagaceta.com.ar/nota/1142540/sociedad/incendio-cafayate-mas-200-hectareas-afectadas-continuan-operativos-para-evitar-rebrotes.html"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 text-ash underline decoration-line-strong underline-offset-4 transition-colors hover:text-bone"
+              href="#monitor"
+              className="inline-flex min-h-12 items-center gap-2.5 rounded-md bg-gold px-5 text-base font-semibold text-ink transition-[background-color,transform] duration-150 hover:bg-gold-soft active:scale-[0.97]"
             >
-              La Gaceta, junio 2026 <ExternalIcon width={12} height={12} />
-              <span className="sr-only">(se abre en una pestaña nueva)</span>
+              <BocaStar size={16} />
+              Ver en vivo
             </a>
-          </motion.p>
-          <motion.div variants={item} className="mt-9 flex flex-wrap items-center gap-3">
             <a
               href="#demo"
-              className="inline-flex min-h-12 items-center gap-2.5 rounded-md bg-fire px-5 text-base font-semibold text-ink transition-[background-color,transform] duration-150 hover:bg-[#ff8442] active:scale-[0.97]"
+              className="inline-flex min-h-12 items-center rounded-md border border-line-strong bg-ink/40 px-5 text-base font-medium text-bone transition-colors hover:border-gold hover:bg-char"
             >
-              Abrir la demo en vivo <ArrowDownIcon />
+              Probar ataques
             </a>
             <a
-              href="#limites"
-              className="inline-flex min-h-12 items-center rounded-md border border-line-strong px-5 text-base font-medium text-bone transition-colors hover:bg-char"
+              href="#resumen"
+              className="inline-flex min-h-12 items-center gap-2 px-2 text-[0.9375rem] font-medium text-azul-soft underline-offset-4 transition-colors hover:text-bone hover:underline"
             >
-              Qué garantiza y qué no
+              Resumen en 10 segundos <ArrowDownIcon />
             </a>
           </motion.div>
           <motion.dl
-            variants={item}
-            className="mt-12 grid max-w-xl grid-cols-2 gap-x-8 gap-y-4 border-t border-line pt-6 font-mono text-xs sm:grid-cols-4"
+            variants={lead}
+            className="mt-10 grid max-w-3xl gap-x-6 gap-y-3 border-t border-line-strong pt-5 text-[0.875rem] sm:grid-cols-2"
           >
-            {[
-              ["Sensor", "VIIRS 375 m"],
-              ["Latencia FIRMS", "≈ 3 h"],
-              ["Firma", "ML-DSA-65"],
-              ["Hash", "SHA3-256"],
-            ].map(([k, v]) => (
-              <div key={k}>
-                <dt className="text-smoke">{k}</dt>
-                <dd className="mt-1 text-[0.8125rem] text-bone">{v}</dd>
+            {ANSWERS.map(([k, v]) => (
+              <div key={k} className="grid grid-cols-[1rem_1fr] gap-x-2">
+                <BocaStar size={11} className="mt-[0.3rem] text-gold" />
+                <div>
+                  <dt className="inline font-semibold text-bone">{k}: </dt>
+                  <dd className="inline text-ash">{v}</dd>
+                </div>
               </div>
             ))}
           </motion.dl>
         </motion.div>
         <motion.div
-          className="flex justify-start lg:justify-end"
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 1.1, delay: 0.45, ease }}
+          className="hidden justify-end lg:flex"
+          initial={{ x: 30 }}
+          animate={{ x: 0 }}
+          transition={{ duration: 1.1, delay: 0.3, ease }}
         >
           <ChainTicker />
         </motion.div>

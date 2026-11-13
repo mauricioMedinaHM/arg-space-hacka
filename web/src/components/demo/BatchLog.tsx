@@ -71,7 +71,7 @@ export function BatchLog({ snap }: { snap: DemoSnapshot }) {
         >
           Flujo terminado: {snap.signed} lotes firmados, {snap.metrics.received} recibidos.{" "}
           {snap.missing.length > 0 ? (
-            <span className="text-amber">Nunca llegaron: #{snap.missing.join(", #")}.</span>
+            <span className="text-gold">Nunca llegaron: #{snap.missing.join(", #")}.</span>
           ) : (
             <span className="text-ok">No quedó ningún hueco en la secuencia.</span>
           )}
@@ -96,7 +96,7 @@ export function BatchLog({ snap }: { snap: DemoSnapshot }) {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.4, ease }}
-                  className="flex items-start gap-2.5 border-b border-line bg-[#1d1113] px-4 py-2.5 text-[0.8125rem] leading-snug text-[#ffb3ba] sm:px-5"
+                  className="flex items-start gap-2.5 border-b border-line bg-bad/10 px-4 py-2.5 text-[0.8125rem] leading-snug text-ash sm:px-5"
                 >
                   <span className="mt-0.5 shrink-0 text-bad">{ATTACK_ICON[e.attack]}</span>
                   <span>

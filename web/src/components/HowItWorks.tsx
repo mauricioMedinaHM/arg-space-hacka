@@ -4,47 +4,104 @@ import { useReducedMotionSafe } from "@/components/ui/useReducedMotionSafe";
 import type { IntegrityStatus } from "@/lib/types";
 import { SectionHeading, Shell } from "@/components/ui/Section";
 import { StatusBadge } from "@/components/demo/meta";
+import { BocaStar } from "@/components/ui/BocaStar";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
 const STAGES = [
   {
     name: "NASA FIRMS",
-    color: "var(--color-fire)",
+    tone: "text-gold",
     text: "Detecciones de focos activos VIIRS (375 m), publicadas con unas 3 horas de latencia.",
   },
   {
     name: "Recolector",
-    color: "var(--color-cyan)",
+    tone: "text-azul-soft",
     text: "Agrupa focos en lotes, los encadena con prev_hash, calcula SHA3-256 y firma con ML-DSA-65.",
   },
   {
     name: "Red",
-    color: "var(--color-bad)",
+    tone: "text-gold",
     text: "Canal no confiable. Acá un lote puede alterarse, perderse, repetirse, desordenarse o ser suplantado.",
   },
   {
     name: "Verificador",
-    color: "var(--color-ok)",
+    tone: "text-azul-soft",
     text: "Comprueba clave, hash, firma, secuencia y cadena. Lo que no pasa queda marcado, no se descarta en silencio.",
   },
   {
     name: "Mapa y coordinación",
-    color: "var(--color-bone)",
+    tone: "text-gold",
     text: "Sólo lo verificado alimenta el análisis, junto a brigadas y equipos locales que conocen el terreno.",
   },
 ];
 
-// Tres paquetes recorren el riel. El segundo es alterado en la red y el verificador lo frena.
+// Tres paquetes (estrellas) recorren el riel. El segundo es alterado en la red y el verificador lo frena.
+const CYCLE = 6;
+const HOP = CYCLE / 4;
 const PACKETS = [
   { delay: 0, tampered: false },
   { delay: 2, tampered: true },
   { delay: 4, tampered: false },
 ];
-const FIRE = "#ff6a1f";
-const CYAN = "#45d9e3";
-const BAD = "#ff5263";
-const OK = "#4bd58f";
+const FIRE = "var(--color-fire)";
+const GOLD = "var(--color-gold)";
+const BAD = "var(--color-bad)";
+const OK = "var(--color-ok)";
+const GLOW_OFF = "drop-shadow(0 0 0px rgb(248 188 38 / 0))";
+const GLOW_ON = "drop-shadow(0 0 7px rgb(248 188 38 / 0.95))";
+const GLOW_BAD = "drop-shadow(0 0 7px rgb(255 97 112 / 0.95))";
+
+/** Latidos de la estrella-nodo `i`: uno por cada paquete que la alcanza dentro del ciclo. */
+function nodeBeat(i: number) {
+  const hits = PACKETS.filter((p) => !(p.tampered && i > 3))
+    .map((p) => ({ at: (p.delay + HOP * i) % CYCLE, bad: p.tampered && i === 3 }))
+    .sort((x, y) => x.at - y.at);
+  const times: number[] = [];
+  const scale: number[] = [];
+  const filter: string[] = [];
+  const color: string[] = [];
+  const push = (t: number, sc: number, f: string, c: string) => {
+    times.push(Math.min(1, t / CYCLE));
+    scale.push(sc);
+    filter.push(f);
+    color.push(c);
+  };
+  if (hits[0].at > 0) push(0, 1, GLOW_OFF, GOLD);
+  for (const h of hits) {
+    push(h.at, 1, GLOW_OFF, GOLD);
+    push(h.at + 0.12, 1.45, h.bad ? GLOW_BAD : GLOW_ON, h.bad ? BAD : GOLD);
+    push(h.at + 0.45, 1, GLOW_OFF, GOLD);
+  }
+  if (times[times.length - 1] < 1) push(CYCLE, 1, GLOW_OFF, GOLD);
+  return { times, scale, filter, color };
+}
+
+/** Nodo del riel: contorno mientras está pendiente; se enciende en oro al entrar en vista y late con cada paquete. */
+function StarNode({ index, className }: { index: number; className: string }) {
+  const reduce = useReducedMotionSafe();
+  const beat = nodeBeat(index);
+  return (
+    <span aria-hidden className={`absolute grid h-7 w-7 place-items-center rounded-full bg-coal ${className}`}>
+      <BocaStar filled={false} size={20} className="col-start-1 row-start-1 text-line-strong" />
+      <motion.span
+        className="col-start-1 row-start-1 block text-gold"
+        initial={{ scale: 0, rotate: -144, opacity: 0 }}
+        whileInView={{ scale: 1, rotate: 0, opacity: 1 }}
+        viewport={{ once: true, margin: "-10% 0px" }}
+        transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 14, delay: 0.25 + index * 0.22 }}
+      >
+        <motion.span
+          className="block"
+          animate={reduce ? undefined : { scale: beat.scale, filter: beat.filter, color: beat.color }}
+          transition={{ duration: CYCLE, repeat: Infinity, ease: "easeOut", times: beat.times }}
+        >
+          <BocaStar size={20} />
+        </motion.span>
+      </motion.span>
+    </span>
+  );
+}
 
 function Rail({ vertical }: { vertical?: boolean }) {
   const reduce = useReducedMotionSafe();
@@ -60,19 +117,21 @@ function Rail({ vertical }: { vertical?: boolean }) {
             className={`pointer-events-none absolute ${vertical ? "left-0 top-0 h-full w-px" : "left-0 top-0 h-px w-full"}`}
             initial={vertical ? { y: "0%" } : { x: "0%" }}
             animate={vertical ? { y: travel } : { x: travel }}
-            transition={{ duration: 6, delay: p.delay, repeat: Infinity, ease: "linear", times: [0, 0.25, 0.5, 0.75, 1] }}
+            transition={{ duration: CYCLE, delay: p.delay, repeat: Infinity, ease: "linear", times: [0, 0.25, 0.5, 0.75, 1] }}
           >
             <motion.span
-              className="absolute -left-[5px] -top-[5px] block h-[11px] w-[11px] rounded-[2px]"
-              initial={{ backgroundColor: FIRE, opacity: 0 }}
+              className="absolute -left-[6px] -top-[6px] block h-3 w-3"
+              initial={{ color: FIRE, opacity: 0 }}
               animate={{
-                backgroundColor: p.tampered ? [FIRE, CYAN, BAD, BAD, BAD] : [FIRE, CYAN, CYAN, OK, OK],
-                opacity: p.tampered ? [0, 1, 1, 1, 0] : [0, 1, 1, 1, 0],
-                scale: p.tampered ? [1, 1, 1.25, 1.6, 0.2] : [1, 1, 1, 1, 1],
-                rotate: p.tampered ? [0, 0, 45, 45, 45] : 0,
+                color: p.tampered ? [FIRE, GOLD, BAD, BAD, BAD] : [FIRE, GOLD, GOLD, OK, OK],
+                opacity: [0, 1, 1, 1, 0],
+                scale: p.tampered ? [1, 1, 1.25, 1.7, 0.2] : [1, 1, 1, 1, 1],
+                rotate: p.tampered ? [0, 72, 144, 324, 360] : [0, 72, 144, 216, 288],
               }}
-              transition={{ duration: 6, delay: p.delay, repeat: Infinity, ease: "linear", times: [0, 0.2, 0.5, 0.75, 1] }}
-            />
+              transition={{ duration: CYCLE, delay: p.delay, repeat: Infinity, ease: "linear", times: [0, 0.2, 0.5, 0.75, 1] }}
+            >
+              <BocaStar size={12} className="block" />
+            </motion.span>
           </motion.span>
         );
       })}
@@ -133,18 +192,14 @@ export function HowItWorks() {
           {STAGES.map((s, i) => (
             <motion.li
               key={s.name}
-              className="relative px-4 pt-8 text-center"
+              className="relative px-4 pt-9 text-center"
               initial={{ opacity: 0, y: 18 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-10% 0px" }}
               transition={{ duration: 0.7, delay: i * 0.1, ease }}
             >
-              <span
-                aria-hidden
-                className="absolute left-1/2 top-0 h-[13px] w-[13px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-coal"
-                style={{ borderColor: s.color }}
-              />
-              <h3 className="text-lg font-semibold" style={{ color: s.color }}>
+              <StarNode index={i} className="left-1/2 top-0 -translate-x-1/2 -translate-y-1/2" />
+              <h3 className={`text-lg font-semibold ${s.tone}`}>
                 {s.name}
               </h3>
               <p className="mx-auto mt-2 max-w-[24ch] text-sm leading-relaxed text-ash">{s.text}</p>
@@ -168,12 +223,8 @@ export function HowItWorks() {
               viewport={{ once: true, margin: "-8% 0px" }}
               transition={{ duration: 0.6, delay: i * 0.05, ease }}
             >
-              <span
-                aria-hidden
-                className="absolute -left-7 top-1.5 h-[13px] w-[13px] rounded-full border-2 bg-coal"
-                style={{ borderColor: s.color }}
-              />
-              <h3 className="text-lg font-semibold" style={{ color: s.color }}>
+              <StarNode index={i} className="-left-[35.5px] top-0" />
+              <h3 className={`text-lg font-semibold ${s.tone}`}>
                 {s.name}
               </h3>
               <p className="mt-1.5 max-w-[46ch] text-sm leading-relaxed text-ash">{s.text}</p>
@@ -200,7 +251,7 @@ export function HowItWorks() {
               viewport={{ once: true, margin: "-6% 0px" }}
               transition={{ duration: 0.55, delay: i * 0.06, ease }}
             >
-              <span className="font-mono text-sm text-smoke">{i + 1}</span>
+              <span className="flex items-center gap-1.5 font-mono text-sm text-gold">{i + 1}</span>
               <h4 className="text-base font-semibold text-bone">{c.name}</h4>
               <p className="max-w-[58ch] text-[0.9375rem] leading-relaxed text-ash">
                 {c.what}

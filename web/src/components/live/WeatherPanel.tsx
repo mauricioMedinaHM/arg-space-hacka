@@ -9,8 +9,8 @@ const ease = [0.16, 1, 0.3, 1] as const;
 
 const RISK: Record<RiskTone, { text: string; bg: string; border: string; bar: string }> = {
   ok: { text: "text-ok", bg: "bg-ok/10", border: "border-ok/50", bar: "bg-ok" },
-  cyan: { text: "text-cyan", bg: "bg-cyan/10", border: "border-cyan/50", bar: "bg-cyan" },
-  amber: { text: "text-amber", bg: "bg-amber/10", border: "border-amber/50", bar: "bg-amber" },
+  azul: { text: "text-azul", bg: "bg-azul/10", border: "border-azul/50", bar: "bg-azul" },
+  gold: { text: "text-gold", bg: "bg-gold/10", border: "border-gold/50", bar: "bg-gold" },
   fire: { text: "text-fire", bg: "bg-fire/10", border: "border-fire/60", bar: "bg-fire" },
   bad: { text: "text-bad", bg: "bg-bad/15", border: "border-bad/70", bar: "bg-bad" },
 };
@@ -64,7 +64,7 @@ function Card({ p, i }: { p: WeatherPoint; i: number }) {
         <dd className="text-ash">{n(p.humidity_pct)} %</dd>
         <dt className="text-smoke">Viento</dt>
         <dd className="flex items-center gap-1.5 text-ash">
-          <span className="text-cyan">
+          <span className="text-azul">
             <WindArrow deg={p.wind_dir_deg} />
           </span>
           {n(p.wind_kmh)} km/h
@@ -126,7 +126,7 @@ export function WeatherPanel({ weather }: { weather: PollSnapshot<WeatherRespons
       </div>
 
       {(data?.degraded || (error && data)) && (
-        <p className="border-b border-line bg-amber/5 px-4 py-2.5 text-[0.8125rem] leading-snug text-amber sm:px-5">
+        <p className="border-b border-line bg-gold/5 px-4 py-2.5 text-[0.8125rem] leading-snug text-gold sm:px-5">
           {data?.degraded
             ? (data.note ?? "El servicio meteorológico respondió en modo degradado.")
             : "No se pudo actualizar; se muestran los últimos valores recibidos."}

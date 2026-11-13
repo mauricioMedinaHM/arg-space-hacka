@@ -4,9 +4,9 @@
   z-index: 3;
 }
 .fire-popup .maplibregl-popup-content {
-  background: #131110;
-  color: #f3eee6;
-  border: 1px solid #4a433c;
+  background: var(--color-coal);
+  color: var(--color-bone);
+  border: 1px solid var(--color-line-strong);
   border-radius: 6px;
   padding: 0.75rem 0.875rem;
   box-shadow: 0 18px 40px -16px rgb(0 0 0 / 0.95);
@@ -18,14 +18,14 @@
 .fire-popup .maplibregl-popup-close-button {
   width: 1.75rem;
   height: 1.75rem;
-  color: #b9b1a5;
+  color: var(--color-ash);
   font-size: 1.125rem;
   line-height: 1;
   border-radius: 4px;
 }
 .fire-popup .maplibregl-popup-close-button:hover {
-  background: #1c1916;
-  color: #f3eee6;
+  background: var(--color-char);
+  color: var(--color-bone);
 }
 .fire-popup__title {
   display: flex;
@@ -55,11 +55,11 @@
   font-size: 0.75rem;
 }
 .fire-popup__grid dt {
-  color: #938b80;
+  color: var(--color-smoke);
 }
 .fire-popup__grid dd {
   font-family: var(--font-mono);
-  color: #f3eee6;
+  color: var(--color-bone);
 }
 
 .wind-mark {
@@ -69,18 +69,18 @@
   pointer-events: none;
   font: 500 10px var(--font-mono);
   letter-spacing: 0.06em;
-  color: #cfeff2;
+  color: var(--color-azul-soft);
   white-space: nowrap;
 }
 .wind-mark__label {
-  background: rgb(11 10 9 / 0.82);
-  border: 1px solid rgb(69 217 227 / 0.35);
+  background: rgb(5 11 24 / 0.85);
+  border: 1px solid rgb(92 149 255 / 0.5);
   border-radius: 2px;
   padding: 1px 5px;
 }
 .wind-mark svg {
   flex: none;
-  filter: drop-shadow(0 0 2px rgb(11 10 9 / 0.9));
+  filter: drop-shadow(0 0 2px rgb(5 11 24 / 0.9));
   transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 /* En mapas angostos sólo queda la flecha: las etiquetas taparían los focos. */

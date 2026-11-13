@@ -5,14 +5,26 @@ export const alt = "Cadena de custodia post-cuántica para focos de incendio en 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-const INK = "#0b0a09";
-const BONE = "#f3eee6";
-const ASH = "#b9b1a5";
-const FIRE = "#ff6a1f";
-const CYAN = "#45d9e3";
-const OK = "#4bd58f";
-const BAD = "#ff5263";
-const LINE = "#4a433c";
+const INK = "#050b18";
+const NAVY = "#00235a";
+const BOCA = "#003a8c";
+const COAL = "#0a1428";
+const BONE = "#f2f5fb";
+const ASH = "#b4c0d6";
+const GOLD = "#f8bc26";
+const AZUL = "#9cc0ff";
+const OK = "#45d48c";
+const BAD = "#ff6170";
+const LINE = "#34497a";
+const STAR = "M12 1.8l2.95 6.52 7.12.78-5.32 4.8 1.5 7-6.25-3.6-6.25 3.6 1.5-7-5.32-4.8 7.12-.78z";
+
+function Star({ size, color = GOLD, style }: { size: number; color?: string; style?: React.CSSProperties }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={style}>
+      <path d={STAR} fill={color} />
+    </svg>
+  );
+}
 
 const BLOCKS = [
   { seq: 41, ok: true },
@@ -33,30 +45,30 @@ export default function Image() {
           justifyContent: "space-between",
           padding: "64px 72px",
           backgroundColor: INK,
-          backgroundImage: "radial-gradient(ellipse 70% 60% at 25% 100%, rgba(255,106,31,0.30), rgba(11,10,9,0) 70%)",
+          backgroundImage: `linear-gradient(160deg, ${NAVY} 0%, ${INK} 62%)`,
+          borderTop: `14px solid ${GOLD}`,
           color: BONE,
           fontFamily: "sans-serif",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", fontSize: 28, color: ASH }}>
-          <svg width="44" height="44" viewBox="0 0 32 32" style={{ marginRight: 16 }}>
-            <path d="M16 3.5 26.8 9.75v12.5L16 28.5 5.2 22.25V9.75Z" fill="none" stroke={CYAN} strokeWidth="1.6" />
-            <path
-              d="M16.4 8.5c.6 3.4 4.6 5.2 4.6 9.4a5 5 0 0 1-10 0c0-2 .9-3.3 2-4.4.3 1.5 1 2.3 1.9 2.6-.5-3 .3-5.7 1.5-7.6Z"
-              fill={FIRE}
-            />
-          </svg>
+          <Star size={44} style={{ marginRight: 16 }} />
           <span style={{ color: BONE, fontWeight: 700 }}>Custodia PQ</span>
           <span style={{ marginLeft: 12 }}>/ Salta</span>
-          <span style={{ marginLeft: "auto", fontSize: 24 }}>ARG Space Hackathon</span>
+          <div style={{ display: "flex", alignItems: "center", marginLeft: "auto", fontSize: 24 }}>
+            <Star size={18} style={{ marginRight: 8 }} />
+            <Star size={18} style={{ marginRight: 8 }} />
+            <Star size={18} style={{ marginRight: 16 }} />
+            <span>ARG Space Hackathon</span>
+          </div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", flexWrap: "wrap", fontSize: 68, fontWeight: 700, lineHeight: 1.05, letterSpacing: -2 }}>
             <span>Cadena de custodia&nbsp;</span>
-            <span style={{ color: CYAN }}>post-cuántica&nbsp;</span>
+            <span style={{ color: GOLD }}>post-cuántica&nbsp;</span>
             <span>para focos de incendio en&nbsp;</span>
-            <span style={{ color: FIRE }}>Salta</span>
+            <span style={{ color: AZUL }}>Salta</span>
           </div>
           <div style={{ display: "flex", marginTop: 26, fontSize: 30, color: ASH, lineHeight: 1.3 }}>
             Focos NASA FIRMS firmados lote por lote con ML-DSA-65 (FIPS 204) y verificados en el navegador.
@@ -72,9 +84,9 @@ export default function Image() {
                   display: "flex",
                   flexDirection: "column",
                   padding: "14px 20px",
-                  border: `2px solid ${b.ok ? LINE : BAD}`,
+                  border: `2px solid ${b.ok ? BOCA : BAD}`,
                   borderRadius: 8,
-                  backgroundColor: "#131110",
+                  backgroundColor: COAL,
                   width: 232,
                 }}
               >

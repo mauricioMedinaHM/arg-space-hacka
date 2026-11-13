@@ -8,10 +8,10 @@ import { ATTACK_ICON, ATTACK_ORDER } from "./meta";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
-function Node({ title, sub, tone }: { title: string; sub: string; tone: "cyan" | "ok" }) {
+function Node({ title, sub, tone }: { title: string; sub: string; tone: "azul" | "ok" }) {
   return (
     <div className="w-[5.25rem] shrink-0 sm:w-28">
-      <div className={`readout ${tone === "cyan" ? "text-cyan" : "text-ok"}`}>{title}</div>
+      <div className={`readout ${tone === "azul" ? "text-azul" : "text-ok"}`}>{title}</div>
       <div className="mt-1 font-mono text-[0.6875rem] leading-tight text-smoke">{sub}</div>
     </div>
   );
@@ -31,7 +31,7 @@ export function NetworkLane({ snap, onAttack }: { snap: DemoSnapshot; onAttack: 
       </div>
 
       <div className="mt-5 flex items-center gap-2 sm:gap-3">
-        <Node title="Recolector" sub={`${snap.signed}/${snap.totalBatches} firmados`} tone="cyan" />
+        <Node title="Recolector" sub={`${snap.signed}/${snap.totalBatches} firmados`} tone="azul" />
         <div className="relative flex h-14 min-w-0 flex-1 items-center justify-end gap-1.5 overflow-hidden border-y border-dashed border-line-strong px-1.5">
           <div aria-hidden className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-line" />
           <AnimatePresence mode="popLayout" initial={false}>
@@ -48,7 +48,7 @@ export function NetworkLane({ snap, onAttack }: { snap: DemoSnapshot; onAttack: 
                   transition={{ duration: 0.45, ease }}
                   title={attacked ? `Ataque aplicado: ${ATTACK_LABELS[q.mark!].title}` : "Lote firmado en tránsito"}
                   className={`relative z-10 flex h-9 min-w-0 shrink items-center gap-1 rounded-sm border px-2 font-mono text-xs font-medium ${
-                    attacked ? "border-bad bg-[#2a1216] text-bad" : "border-cyan/60 bg-[#0f2224] text-cyan"
+                    attacked ? "border-bad bg-bad/15 text-bad" : "border-gold/60 bg-boca/45 text-gold"
                   } ${head ? "shadow-[0_6px_16px_-6px_rgb(0_0_0/0.9)]" : "opacity-80"}`}
                 >
                   {attacked && <span className="shrink-0 [&>svg]:h-3 [&>svg]:w-3">{ATTACK_ICON[q.mark!]}</span>}
@@ -97,7 +97,7 @@ export function NetworkLane({ snap, onAttack }: { snap: DemoSnapshot; onAttack: 
               onPointerEnter={() => setHint(k)}
               onFocus={() => setHint(k)}
               whileTap={disabled ? undefined : { scale: 0.95 }}
-              className="group flex min-h-11 min-w-[6.25rem] flex-1 items-center justify-center gap-2 rounded-md border border-line-strong bg-char px-3 text-sm font-medium text-bone transition-colors duration-200 hover:border-bad hover:bg-[#2a1216] hover:text-bad disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line-strong disabled:hover:bg-char disabled:hover:text-bone"
+              className="group flex min-h-11 min-w-[6.25rem] flex-1 items-center justify-center gap-2 rounded-md border border-line-strong bg-char px-3 text-sm font-medium text-bone transition-colors duration-200 hover:border-bad hover:bg-bad/15 hover:text-bad disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line-strong disabled:hover:bg-char disabled:hover:text-bone"
             >
               <span className="text-bad">{ATTACK_ICON[k]}</span>
               {ATTACK_LABELS[k].title}

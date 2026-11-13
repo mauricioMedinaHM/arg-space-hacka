@@ -1,9 +1,12 @@
 "use client";
 import dynamic from "next/dynamic";
+import { StarSpinner } from "@/components/ui/BocaStar";
 import { useEffect, useRef, useState, type ComponentProps } from "react";
 
 const placeholder = (
-  <div className="flex h-full items-center justify-center font-mono text-xs text-smoke">Cargando mapa…</div>
+  <div className="flex h-full items-center justify-center gap-2.5 font-mono text-xs text-smoke">
+    <StarSpinner size={14} /> Cargando mapa…
+  </div>
 );
 
 const FireMap = dynamic(() => import("./FireMap"), { ssr: false, loading: () => placeholder });

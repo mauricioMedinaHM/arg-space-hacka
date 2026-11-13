@@ -2,20 +2,29 @@
 
 /* Tema único: sala de control nocturna. Se fuerza oscuro (color-scheme: dark). */
 @theme {
-  --color-ink: #0b0a09;
-  --color-coal: #131110;
-  --color-char: #1c1916;
-  --color-line: #2c2824;
-  --color-line-strong: #4a433c;
-  --color-bone: #f3eee6;
-  --color-ash: #b9b1a5;
-  --color-smoke: #938b80;
-  --color-fire: #ff6a1f;
-  --color-amber: #ffb52e;
-  --color-cyan: #45d9e3;
-  --color-violet: #ab94ff;
-  --color-ok: #4bd58f;
-  --color-bad: #ff5263;
+  /* Paleta azul y oro (Boca Juniors) sobre noche oscura. Contrastes WCAG medidos sobre ink/coal/char:
+     bone 18:1 · ash 10.7:1 · smoke 7:1 · gold 11.4:1 · azul 6.7:1 · ok 10.4:1 · bad 6.7:1.
+     `boca` y `boca-deep` son SOLO superficies/fondos (1.9:1 como texto: no usar para texto). */
+  --color-ink: #050b18;
+  --color-coal: #0a1428;
+  --color-char: #0f1d3a;
+  --color-line: #1b2c52;
+  --color-line-strong: #34497a;
+  --color-bone: #f2f5fb;
+  --color-ash: #b4c0d6;
+  --color-smoke: #8d9bb5;
+
+  --color-boca: #003a8c;      /* azul institucional — superficies */
+  --color-boca-deep: #00235a; /* azul profundo — fondos de bandas */
+  --color-gold: #f8bc26;      /* oro — acento principal, estrellas, CTA */
+  --color-gold-soft: #ffd667;
+  --color-azul: #5c95ff;      /* azul legible para texto/enlaces sobre oscuro */
+  --color-azul-soft: #9cc0ff;
+
+  /* Semánticos (estado de verificación y datos de fuego): se mantienen por significado. */
+  --color-fire: #ff7a2e;      /* sólo focos de calor en mapa/datos */
+  --color-ok: #45d48c;
+  --color-bad: #ff6170;
 
   --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -59,12 +68,12 @@ body {
 }
 
 ::selection {
-  background: var(--color-fire);
+  background: var(--color-gold);
   color: var(--color-ink);
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-cyan);
+  outline: 2px solid var(--color-gold);
   outline-offset: 2px;
   border-radius: 2px;
 }
@@ -91,6 +100,28 @@ body {
   text-transform: uppercase;
 }
 
+/* Estrella de carga: gira y late. */
+@keyframes star-spin {
+  0% { transform: rotate(0deg) scale(0.85); }
+  50% { transform: rotate(180deg) scale(1.15); }
+  100% { transform: rotate(360deg) scale(0.85); }
+}
+.star-spin {
+  animation: star-spin 1.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+@keyframes star-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 0.7; }
+}
+.star-pulse {
+  animation: star-pulse 1.6s ease-in-out infinite;
+}
+
+/* Banda azul: superficie teñida para paneles y secciones destacadas. */
+.band-boca {
+  background-image: linear-gradient(180deg, color-mix(in oklab, var(--color-boca-deep) 55%, var(--color-ink)) 0%, var(--color-ink) 100%);
+}
+
 .thin-scroll {
   scrollbar-width: thin;
   scrollbar-color: var(--color-line-strong) transparent;
@@ -99,7 +130,7 @@ body {
 /* MapLibre: integra los controles al tema. */
 .maplibregl-map {
   font-family: var(--font-mono);
-  background: #0d0c0b;
+  background: var(--color-ink);
 }
 .maplibregl-ctrl-group {
   background: var(--color-coal) !important;
@@ -114,7 +145,7 @@ body {
   filter: invert(0.9);
 }
 .maplibregl-ctrl-attrib {
-  background: rgb(11 10 9 / 0.78) !important;
+  background: rgb(5 11 24 / 0.8) !important;
   color: var(--color-ash);
   font-size: 10px;
 }

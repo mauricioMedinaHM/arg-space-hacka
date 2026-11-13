@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "motion/react";
 import { useId, useRef, type KeyboardEvent } from "react";
+import { BocaStar } from "./BocaStar";
 
 export interface SegOption<T extends string | number> {
   value: T;
@@ -18,13 +19,13 @@ export function Segmented<T extends string | number>({
   options,
   value,
   onChange,
-  tone = "bone",
+  tone = "gold",
 }: {
   label: string;
   options: SegOption<T>[];
   value: T;
   onChange: (v: T) => void;
-  tone?: "bone" | "fire";
+  tone?: "bone" | "gold";
 }) {
   const id = useId();
   const group = useRef<HTMLDivElement>(null);
@@ -62,7 +63,7 @@ export function Segmented<T extends string | number>({
       role="radiogroup"
       aria-label={label}
       onKeyDown={onKeyDown}
-      className="inline-flex max-w-full flex-wrap rounded-md border border-line bg-ink p-0.5"
+      className="inline-flex max-w-full flex-wrap rounded-md border border-line-strong bg-ink p-0.5"
     >
       {options.map((o, i) => {
         const active = o.value === value;
@@ -82,11 +83,14 @@ export function Segmented<T extends string | number>({
             {active && (
               <motion.span
                 layoutId={`${id}-pill`}
-                className={`absolute inset-0 rounded-[5px] ${tone === "fire" ? "bg-fire" : "bg-bone"}`}
+                className={`absolute inset-0 rounded-[5px] ${tone === "gold" ? "bg-gold" : "bg-bone"}`}
                 transition={{ type: "spring", stiffness: 520, damping: 40 }}
               />
             )}
-            <span className="relative whitespace-nowrap">{o.label}</span>
+            <span className="relative inline-flex items-center gap-1.5 whitespace-nowrap">
+              {active && <BocaStar size={10} className="shrink-0" />}
+              {o.label}
+            </span>
           </button>
         );
       })}

@@ -48,9 +48,13 @@ const FALLBACK_STYLE = {
   ],
 };
 
-const FIRE = "#ff6a1f";
-const AMBER = "#ffb52e";
-const BAD = "#ff5263";
+const FIRE = "#ff7a2e";
+const GOLD = "#f8bc26";
+const BAD = "#ff6170";
+const OK = "#45d48c";
+const BONE = "#f2f5fb";
+const NIGHT = "#081226";
+const WATER = "#0c2250";
 
 type FC = {
   type: "FeatureCollection";
@@ -80,7 +84,7 @@ function crossImage(): ImageData | null {
   const ctx = c.getContext("2d");
   if (!ctx) return null;
   ctx.lineCap = "round";
-  ctx.strokeStyle = "rgba(11,10,9,0.9)";
+  ctx.strokeStyle = "rgba(5,11,24,0.9)";
   ctx.lineWidth = 11;
   const x = () => {
     ctx.beginPath();
@@ -115,7 +119,7 @@ function popupContent(p: MapPoint): HTMLElement {
   const info = p.info;
   const title = node("div", "fire-popup__title");
   const dot = node("span", "fire-popup__dot");
-  dot.style.background = p.status === "bad" ? BAD : p.status === "reordered" ? AMBER : FIRE;
+  dot.style.background = p.status === "bad" ? BAD : p.status === "reordered" ? GOLD : FIRE;
   title.append(dot, node("span", undefined, info ? `${SATELLITE_NAME[info.satellite] ?? info.satellite} · ${info.instrument}` : "Foco de calor"));
   root.append(title);
 
@@ -128,7 +132,7 @@ function popupContent(p: MapPoint): HTMLElement {
         ? "✓ Firma válida · lote fuera de orden"
         : "✓ Firma ML-DSA-65 verificada",
   );
-  status.style.color = p.status === "bad" ? BAD : p.status === "reordered" ? AMBER : "#4bd58f";
+  status.style.color = p.status === "bad" ? BAD : p.status === "reordered" ? GOLD : OK;
   root.append(status);
 
   const dl = node("dl", "fire-popup__grid");
@@ -151,7 +155,7 @@ function popupContent(p: MapPoint): HTMLElement {
 }
 
 const ARROW_SVG =
-  '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M9 15.5V3M4.5 7.2 9 2.5l4.5 4.7" stroke="#45d9e3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M9 15.5V3M4.5 7.2 9 2.5l4.5 4.7" stroke="#9cc0ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 export default function FireMap({
   points,
@@ -218,8 +222,8 @@ export default function FireMap({
     const tag = document.createElement("div");
     tag.className = "pointer-events-none flex items-center gap-2";
     tag.innerHTML =
-      '<span style="width:14px;height:14px;border:1px solid #f3eee6;border-radius:50%;display:block;box-shadow:0 0 0 3px rgba(11,10,9,.55)"></span>' +
-      '<span style="font:500 10px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:#f3eee6;background:rgba(11,10,9,.8);padding:2px 6px;border-radius:2px">Cafayate</span>';
+      `<span style="width:14px;height:14px;border:1px solid ${BONE};border-radius:50%;display:block;box-shadow:0 0 0 3px rgba(5,11,24,.6)"></span>` +
+      `<span style="font:500 10px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:${BONE};background:rgba(5,11,24,.85);padding:2px 6px;border-radius:2px">Cafayate</span>`;
     if (landmark) new Marker({ element: tag, anchor: "left", offset: [-7, 0] }).setLngLat(CAFAYATE).addTo(map);
 
     let pulse: { stop: () => void } | null = null;
@@ -232,6 +236,16 @@ export default function FireMap({
     });
 
     map.on("load", () => {
+      // Tiñe el mapa base de azul noche para que acompañe la paleta (sólo fondo y agua; el resto queda neutro).
+      try {
+        for (const l of map.getStyle().layers ?? []) {
+          if (l.type === "background") map.setPaintProperty(l.id, "background-color", NIGHT);
+          else if (l.type === "fill" && (l as { "source-layer"?: string })["source-layer"] === "water")
+            map.setPaintProperty(l.id, "fill-color", WATER);
+        }
+      } catch {
+        /* estilo de respaldo ráster: no hay capas que teñir */
+      }
       const img = crossImage();
       const okFill = colorBy === "frp" ? FRP_COLOR : FIRE;
       if (img) map.addImage("x-bad", img, { pixelRatio: 2 });
@@ -257,7 +271,7 @@ export default function FireMap({
         paint: {
           "circle-radius": 8,
           "circle-color": "rgba(0,0,0,0)",
-          "circle-stroke-color": ["match", ["get", "status"], "reordered", AMBER, okFill],
+          "circle-stroke-color": ["match", ["get", "status"], "reordered", GOLD, okFill],
           "circle-stroke-width": 1.5,
           "circle-stroke-opacity": 0,
         },
@@ -269,9 +283,9 @@ export default function FireMap({
         filter: valid,
         paint: {
           "circle-radius": RADIUS,
-          "circle-color": ["match", ["get", "status"], "reordered", "rgba(255,181,46,0.12)", okFill],
+          "circle-color": ["match", ["get", "status"], "reordered", "rgba(248,188,38,0.14)", okFill],
           "circle-opacity": ["match", ["get", "status"], "reordered", 1, 0.9],
-          "circle-stroke-color": ["match", ["get", "status"], "reordered", AMBER, "#ffd9a8"],
+          "circle-stroke-color": ["match", ["get", "status"], "reordered", GOLD, "#fff1cf"],
           "circle-stroke-width": ["match", ["get", "status"], "reordered", 2, 0.75],
         },
       } as never);

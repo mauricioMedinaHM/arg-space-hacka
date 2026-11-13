@@ -2,26 +2,27 @@
 import { motion } from "motion/react";
 import type { LiveSnapshot } from "@/lib/live/streamStore";
 import { describeSource } from "@/lib/live/source";
+import { BocaStar } from "@/components/ui/BocaStar";
 import { ResetIcon } from "@/components/ui/icons";
 import { Countdown, RelativeTime, useProgress } from "./Ticking";
 
-type Tone = "fire" | "amber" | "cyan" | "bad" | "smoke";
+type Tone = "live" | "snap" | "azul" | "bad" | "smoke";
 
-const TONES: Record<Tone, { text: string; bg: string; border: string; dot: string }> = {
-  fire: { text: "text-fire", bg: "bg-fire/10", border: "border-fire/60", dot: "bg-fire" },
-  amber: { text: "text-amber", bg: "bg-amber/10", border: "border-amber/60", dot: "bg-amber" },
-  cyan: { text: "text-cyan", bg: "bg-cyan/10", border: "border-cyan/50", dot: "bg-cyan" },
-  bad: { text: "text-bad", bg: "bg-bad/10", border: "border-bad/60", dot: "bg-bad" },
-  smoke: { text: "text-ash", bg: "bg-char", border: "border-line-strong", dot: "bg-smoke" },
+const TONES: Record<Tone, { text: string; bg: string; border: string }> = {
+  live: { text: "text-gold", bg: "bg-gold/10", border: "border-gold/60" },
+  snap: { text: "text-azul-soft", bg: "bg-boca/30", border: "border-boca" },
+  azul: { text: "text-azul", bg: "bg-azul/10", border: "border-azul/50" },
+  bad: { text: "text-bad", bg: "bg-bad/10", border: "border-bad/60" },
+  smoke: { text: "text-ash", bg: "bg-char", border: "border-line-strong" },
 };
 
 export function indicatorOf(snap: LiveSnapshot): { label: string; tone: Tone; pulse: boolean } {
   if (snap.phase === "paused") return { label: "En pausa", tone: "smoke", pulse: false };
   if (snap.phase === "retrying") return { label: "Sin conexión", tone: "bad", pulse: false };
-  if (!snap.hello) return { label: "Conectando", tone: "cyan", pulse: true };
+  if (!snap.hello) return { label: "Conectando", tone: "azul", pulse: true };
   return describeSource(snap.hello.source, snap.hello.origin).live
-    ? { label: "En vivo", tone: "fire", pulse: true }
-    : { label: "Snapshot · no es en vivo", tone: "amber", pulse: false };
+    ? { label: "En vivo", tone: "live", pulse: true }
+    : { label: "Snapshot · no es en vivo", tone: "snap", pulse: false };
 }
 
 function Indicator({ label, tone, pulse }: { label: string; tone: Tone; pulse: boolean }) {
@@ -30,16 +31,19 @@ function Indicator({ label, tone, pulse }: { label: string; tone: Tone; pulse: b
     <span
       className={`inline-flex min-h-8 shrink-0 items-center gap-2.5 rounded-sm border px-3 font-mono text-[0.75rem] font-semibold uppercase tracking-[0.14em] ${t.text} ${t.bg} ${t.border}`}
     >
-      <span className="relative flex h-2.5 w-2.5">
+      {/* Estrella de estado: llena y latiendo en vivo; hueca cuando lo que se ve es el snapshot. */}
+      <span className="relative flex h-3 w-3 items-center justify-center">
         {pulse && (
           <motion.span
             aria-hidden
-            className={`absolute inset-0 rounded-full motion-reduce:hidden ${t.dot}`}
-            animate={{ scale: [1, 2.8], opacity: [0.7, 0] }}
+            className="absolute inset-0 motion-reduce:hidden"
+            animate={{ scale: [1, 2.6], opacity: [0.7, 0] }}
             transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut" }}
-          />
+          >
+            <BocaStar size={12} className="block" />
+          </motion.span>
         )}
-        <span className={`relative h-2.5 w-2.5 rounded-full ${t.dot}`} />
+        <BocaStar size={12} filled={tone !== "snap"} className="relative block" />
       </span>
       {label}
     </span>
@@ -60,7 +64,7 @@ export function StatusHeader({ snap, onRefresh }: { snap: LiveSnapshot; onRefres
         <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
           <Indicator {...ind} />
           <div className="min-w-0">
-            <div className={`text-[0.9375rem] font-medium leading-snug ${src && !src.live ? "text-amber" : "text-bone"}`}>
+            <div className={`text-[0.9375rem] font-medium leading-snug ${src && !src.live ? "text-gold" : "text-bone"}`}>
               {src ? src.label : snap.phase === "retrying" ? "Todavía no hay datos del servidor" : "Pidiendo la clave pública y abriendo el flujo…"}
             </div>
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-ash">
@@ -103,7 +107,7 @@ export function StatusHeader({ snap, onRefresh }: { snap: LiveSnapshot; onRefres
             <div className="mt-2 h-1 overflow-hidden rounded-full bg-line" aria-hidden>
               <div
                 className={`h-full origin-left transition-transform duration-1000 ease-linear motion-reduce:transition-none ${
-                  snap.phase === "retrying" ? "bg-bad" : "bg-cyan"
+                  snap.phase === "retrying" ? "bg-bad" : "bg-gold"
                 }`}
                 style={{
                   transform: `scaleX(${busy ? (snap.cycleTotal ? snap.cycleReceived / snap.cycleTotal : 0.08) : progress})`,
@@ -125,13 +129,13 @@ export function StatusHeader({ snap, onRefresh }: { snap: LiveSnapshot; onRefres
       </div>
 
       {snap.phase === "retrying" && snap.error && (
-        <p className="mt-3 rounded-sm border border-bad/40 bg-bad/10 px-3 py-2 text-[0.8125rem] leading-snug text-[#ffb3ba]">
+        <p className="mt-3 rounded-sm border border-bad/40 bg-bad/10 px-3 py-2 text-[0.8125rem] leading-snug text-bad">
           {snap.error} Se reintenta solo, con espera creciente.
           {snap.detections.length > 0 && " El mapa conserva el último ciclo verificado."}
         </p>
       )}
       {snap.hello?.note && src && !src.live && (
-        <p className="mt-3 text-[0.8125rem] leading-snug text-amber">{snap.hello.note}</p>
+        <p className="mt-3 text-[0.8125rem] leading-snug text-gold">{snap.hello.note}</p>
       )}
 
       <p className="mt-3 max-w-[92ch] text-[0.8125rem] leading-snug text-ash">

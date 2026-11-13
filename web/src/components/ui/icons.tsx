@@ -95,12 +95,14 @@ export const ChevronIcon = (p: P) => (
     <path d="m4 6 4 4 4-4" />
   </svg>
 );
+/** Marca: estrella dorada dentro de un hexágono azul (forma genérica). */
 export const BrandMark = (p: P) => (
   <svg {...base({ width: 22, height: 22, viewBox: "0 0 32 32", strokeWidth: 1.6, ...p })}>
-    <path d="M16 3.5 26.8 9.75v12.5L16 28.5 5.2 22.25V9.75Z" stroke="var(--color-cyan)" />
+    <path d="M16 3.5 26.8 9.75v12.5L16 28.5 5.2 22.25V9.75Z" stroke="var(--color-azul)" fill="var(--color-boca-deep)" />
     <path
-      d="M16.4 8.5c.6 3.4 4.6 5.2 4.6 9.4a5 5 0 0 1-10 0c0-2 .9-3.3 2-4.4.3 1.5 1 2.3 1.9 2.6-.5-3 .3-5.7 1.5-7.6Z"
-      fill="var(--color-fire)"
+      transform="translate(7.6 7.4) scale(0.7)"
+      d="M12 1.8l2.95 6.52 7.12.78-5.32 4.8 1.5 7-6.25-3.6-6.25 3.6 1.5-7-5.32-4.8 7.12-.78z"
+      fill="var(--color-gold)"
       stroke="none"
     />
   </svg>

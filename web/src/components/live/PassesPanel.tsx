@@ -10,11 +10,11 @@ const ease = [0.16, 1, 0.3, 1] as const;
 const HORIZON_MS = 24 * 3600 * 1000;
 
 const SAT: Record<string, { dot: string; text: string }> = {
-  "NOAA-20": { dot: "bg-cyan", text: "text-cyan" },
-  "NOAA-21": { dot: "bg-violet", text: "text-violet" },
-  "Suomi NPP": { dot: "bg-amber", text: "text-amber" },
+  "NOAA-20": { dot: "bg-azul", text: "text-azul" },
+  "NOAA-21": { dot: "bg-azul-soft", text: "text-azul-soft" },
+  "Suomi NPP": { dot: "bg-gold", text: "text-gold" },
   Aqua: { dot: "bg-ok", text: "text-ok" },
-  Terra: { dot: "bg-fire", text: "text-fire" },
+  Terra: { dot: "bg-ash", text: "text-ash" },
 };
 const satTone = (name: string) => SAT[name] ?? { dot: "bg-bone", text: "text-bone" };
 const passKey = (p: SatPass) => `${p.satellite}-${p.start_utc}`;
@@ -96,7 +96,7 @@ export function PassesPanel({ passes }: { passes: PollSnapshot<PassesResponse> }
       </div>
 
       {(data?.degraded || (error && data)) && (
-        <p className="border-b border-line bg-amber/5 px-4 py-2.5 text-[0.8125rem] leading-snug text-amber sm:px-5">
+        <p className="border-b border-line bg-gold/5 px-4 py-2.5 text-[0.8125rem] leading-snug text-gold sm:px-5">
           {data?.degraded
             ? (data.note ?? "Se usaron elementos orbitales de respaldo: los horarios pueden correrse algunos minutos.")
             : "No se pudo actualizar; se muestran las últimas pasadas calculadas."}

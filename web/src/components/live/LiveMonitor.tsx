@@ -42,7 +42,7 @@ function Legend({ wind }: { wind: boolean }) {
       {wind && (
         <li className="flex items-center gap-1.5">
           <svg width="12" height="12" viewBox="0 0 18 18" fill="none" aria-hidden>
-            <path d="M9 15.5V3M4.5 7.2 9 2.5l4.5 4.7" stroke="var(--color-cyan)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M9 15.5V3M4.5 7.2 9 2.5l4.5 4.7" stroke="var(--color-azul-soft)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           Hacia dónde sopla el viento
         </li>
@@ -138,7 +138,7 @@ export function LiveMonitor() {
                   {points.length} {points.length === 1 ? "foco" : "focos"} · {live ? "últimas 24 h" : src ? "snapshot" : "esperando datos"}
                 </div>
                 {src && !live && (
-                  <div className="rounded-sm border border-amber/50 bg-ink/90 px-2.5 py-1.5 text-[0.75rem] leading-snug text-amber">
+                  <div className="rounded-sm border border-gold/50 bg-ink/90 px-2.5 py-1.5 text-[0.75rem] leading-snug text-gold">
                     Snapshot congelado, no es en vivo
                     {hiddenSynthetic > 0 && ` · ${hiddenSynthetic} focos sintéticos omitidos`}
                   </div>
@@ -165,7 +165,7 @@ export function LiveMonitor() {
                     </p>
                     <a
                       href="#demo"
-                      className="mt-3 inline-flex min-h-9 items-center rounded-md border border-fire/70 px-3 text-[0.8125rem] font-medium text-fire transition-colors hover:bg-fire hover:text-ink"
+                      className="mt-3 inline-flex min-h-9 items-center rounded-md border border-gold/70 px-3 text-[0.8125rem] font-medium text-gold transition-colors hover:bg-gold hover:text-ink"
                     >
                       Ver la reconstrucción sintética de Cafayate en el sandbox
                     </a>
@@ -209,7 +209,7 @@ export function LiveMonitor() {
                             </span>
                           </td>
                           <td className="hidden px-3 py-2 text-smoke sm:table-cell">{formatUtc(t, false)}</td>
-                          <td className="px-3 py-2 text-right tabular-nums text-amber">
+                          <td className="px-3 py-2 text-right tabular-nums text-gold">
                             {d.frp.toLocaleString("es-AR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MW
                           </td>
                           <td className="hidden py-2 pl-3 pr-5 text-ash min-[480px]:table-cell">{CONFIDENCE_LABEL[d.confidence] ?? d.confidence}</td>
@@ -236,7 +236,7 @@ export function LiveMonitor() {
 
         <p className="border-t border-line px-4 py-3.5 text-[0.8125rem] leading-snug text-ash sm:px-5">
           Este monitor sólo verifica. Para alterar, duplicar o falsificar lotes y ver cómo reacciona el verificador, usá el{" "}
-          <a href="#demo" className="text-fire underline underline-offset-2 hover:text-bone">
+          <a href="#demo" className="text-azul-soft underline underline-offset-2 hover:text-gold">
             sandbox de ataques
           </a>
           , que puede reproducir estos mismos lotes firmados por el servidor.

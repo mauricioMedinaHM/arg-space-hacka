@@ -1,6 +1,6 @@
 "use client";
 import { motion } from "motion/react";
-import { CheckIcon, CrossIcon } from "@/components/ui/icons";
+import { BocaStar } from "@/components/ui/BocaStar";
 import { SectionHeading, Shell } from "@/components/ui/Section";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -48,14 +48,14 @@ export function Limits() {
       </SectionHeading>
 
       <motion.div
-        className="mb-14 flex max-w-4xl gap-4 border-y border-ok/40 py-6"
+        className="mb-14 flex max-w-4xl gap-4 rounded-lg border border-boca bg-boca/25 p-5 sm:p-7"
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-8% 0px" }}
         transition={{ duration: 0.7, ease }}
       >
-        <span className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ok text-ink">
-          <CheckIcon strokeWidth={2.2} />
+        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold text-ink">
+          <BocaStar size={18} />
         </span>
         <p className="text-xl font-medium leading-snug text-bone md:text-2xl">
           Sí garantiza que cada lote que acepta el verificador es exactamente el que firmó el recolector, en el orden en
@@ -74,8 +74,8 @@ export function Limits() {
             viewport={{ once: true, margin: "-6% 0px" }}
             transition={{ duration: 0.55, delay: (i % 2) * 0.08, ease }}
           >
-            <span className="mt-1 shrink-0 text-bad">
-              <CrossIcon strokeWidth={2} />
+            <span className="mt-1.5 shrink-0 text-gold">
+              <BocaStar filled={false} size={16} />
             </span>
             <div>
               <h4 className="text-lg font-semibold text-bone">{n.title}</h4>

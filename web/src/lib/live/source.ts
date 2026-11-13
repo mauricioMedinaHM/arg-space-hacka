@@ -47,15 +47,15 @@ export const CONFIDENCE_LABEL: Record<FireDetection["confidence"], string> = {
   h: "alta",
 };
 
-/** Rampa de color por FRP (MW): amarillo → naranja → rojo-naranja → blanco incandescente. */
+/** Rampa de color por FRP (MW): oro → naranja fuego → rojo-naranja → blanco incandescente. */
 export const FRP_STOPS: [number, string][] = [
-  [0, "#ffd166"],
-  [10, "#ff9330"],
-  [30, "#ff5a1f"],
+  [0, "#ffd667"],
+  [10, "#f8a326"],
+  [30, "#ff7a2e"],
   [80, "#fff1e0"],
 ];
 
-export type RiskTone = "ok" | "cyan" | "amber" | "fire" | "bad";
+export type RiskTone = "ok" | "azul" | "gold" | "fire" | "bad";
 
 export const RISK_ORDER: FireRisk[] = ["bajo", "moderado", "alto", "muy alto", "extremo"];
 
@@ -64,15 +64,15 @@ export function riskTone(risk: string): RiskTone {
     case "bajo":
       return "ok";
     case "moderado":
-      return "cyan";
+      return "azul";
     case "alto":
-      return "amber";
+      return "gold";
     case "muy alto":
       return "fire";
     case "extremo":
       return "bad";
     default:
-      return "cyan";
+      return "azul";
   }
 }
 

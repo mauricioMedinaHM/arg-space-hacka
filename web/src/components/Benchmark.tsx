@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ALG, runBenchmarkAsync, type BenchResult } from "@/lib/pipeline";
 import type { FireDetection } from "@/lib/types";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import { BocaStar, StarSpinner } from "@/components/ui/BocaStar";
 import { SectionHeading, Shell } from "@/components/ui/Section";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -62,16 +63,11 @@ export function Benchmark() {
             type="button"
             onClick={run}
             disabled={state.status === "running"}
-            className="inline-flex min-h-12 min-w-[14rem] items-center justify-center gap-2.5 rounded-md bg-cyan px-5 text-base font-semibold text-ink transition-[background-color,transform] duration-150 hover:bg-[#7be6ed] active:scale-[0.97] disabled:cursor-wait disabled:opacity-60"
+            className="inline-flex min-h-12 min-w-[14rem] items-center justify-center gap-2.5 rounded-md bg-gold px-5 text-base font-semibold text-ink transition-[background-color,transform] duration-150 hover:bg-gold-soft active:scale-[0.97] disabled:cursor-wait disabled:opacity-60"
           >
             {state.status === "running" ? (
               <>
-                <motion.span
-                  aria-hidden
-                  className="h-2 w-2 rounded-full bg-ink"
-                  animate={{ opacity: [1, 0.2, 1] }}
-                  transition={{ duration: 0.8, repeat: Infinity }}
-                />
+                <StarSpinner size={16} className="text-ink" />
                 Midiendo…
               </>
             ) : state.status === "done" ? (
@@ -97,10 +93,11 @@ export function Benchmark() {
               <motion.div
                 key="empty"
                 exit={{ opacity: 0 }}
-                className="flex h-full min-h-[22rem] items-center justify-center rounded-lg border border-dashed border-line-strong p-8 text-center text-[0.9375rem] leading-relaxed text-ash"
+                className="flex h-full min-h-[22rem] items-center justify-center rounded-lg border border-dashed border-boca bg-boca/15 p-8 text-center text-[0.9375rem] leading-relaxed text-ash"
               >
                 {state.status === "running" ? (
-                  <span>
+                  <span className="flex flex-col items-center gap-4">
+                    <StarSpinner size={28} />
                     Firmando y verificando {N} lotes…{" "}
                     <span aria-hidden className="font-mono tabular-nums text-smoke">
                       {state.done}/{N}
@@ -125,7 +122,7 @@ export function Benchmark() {
                       </div>
                       <div className="mt-2 h-2 overflow-hidden rounded-full bg-char">
                         <motion.div
-                          className="h-full origin-left rounded-full bg-cyan"
+                          className="h-full origin-left rounded-full bg-linear-to-r from-gold to-gold-soft"
                           style={{ width: `${Math.max((t.ms / maxMs) * 100, 1.5)}%` }}
                           initial={{ scaleX: 0 }}
                           animate={{ scaleX: 1 }}
@@ -144,13 +141,15 @@ export function Benchmark() {
                 >
                   <div className="border-b border-line py-5">
                     <dt className="text-sm text-ash">Lotes por segundo (firma + verificación)</dt>
-                    <dd className="mt-1 font-mono text-4xl font-medium text-cyan">
+                    <dd className="mt-1 flex items-center gap-3 font-mono text-4xl font-medium text-gold">
+                      <BocaStar size={18} className="shrink-0" />
                       <AnimatedNumber value={r.batches_per_s} decimals={1} />
                     </dd>
                   </div>
                   <div className="border-b border-line py-5">
                     <dt className="text-sm text-ash">Detecciones por segundo</dt>
-                    <dd className="mt-1 font-mono text-4xl font-medium text-cyan">
+                    <dd className="mt-1 flex items-center gap-3 font-mono text-4xl font-medium text-gold">
+                      <BocaStar size={18} className="shrink-0" />
                       <AnimatedNumber value={r.detections_per_s} />
                     </dd>
                   </div>

@@ -1,6 +1,7 @@
 "use client";
 import type { Metrics } from "@/lib/demo/engine";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import { BocaStar } from "@/components/ui/BocaStar";
 import { TONE, type Tone } from "./meta";
 
 export function MetricsBar({ m }: { m: Metrics }) {
@@ -8,12 +9,12 @@ export function MetricsBar({ m }: { m: Metrics }) {
     { label: "Lotes recibidos", value: m.received },
     { label: "Válidos", value: m.valid, tone: "ok" },
     { label: "Alterados", value: m.tampered, tone: "bad" },
-    { label: "Duplicados", value: m.duplicate, tone: "violet" },
-    { label: "Perdidos", value: m.lost, tone: "amber" },
-    { label: "Reordenados", value: m.reordered, tone: "amber" },
+    { label: "Duplicados", value: m.duplicate, tone: "soft" },
+    { label: "Perdidos", value: m.lost, tone: "gold" },
+    { label: "Reordenados", value: m.reordered, tone: "gold" },
     { label: "Falsificados", value: m.forged, tone: "bad" },
     { label: "Cadena rota", value: m.chain, tone: "bad" },
-    { label: "Verificación media", value: m.avgVerifyMs, decimals: 2, unit: "ms", tone: "cyan" },
+    { label: "Verificación media", value: m.avgVerifyMs, decimals: 2, unit: "ms", tone: "azul" },
   ];
   return (
     <dl className="grid grid-cols-3 gap-px bg-line lg:grid-cols-9">
@@ -22,7 +23,7 @@ export function MetricsBar({ m }: { m: Metrics }) {
         return (
           <div key={c.label} className="bg-coal px-4 py-4">
             <dt className="flex items-center gap-1.5 text-[0.75rem] text-ash">
-              {c.tone && <span className={`h-1.5 w-1.5 rounded-full ${TONE[c.tone].dot} ${lit ? "" : "opacity-40"}`} />}
+              {c.tone && <BocaStar size={9} className={`shrink-0 ${TONE[c.tone].text} ${lit ? "" : "opacity-45"}`} />}
               {c.label}
             </dt>
             <dd

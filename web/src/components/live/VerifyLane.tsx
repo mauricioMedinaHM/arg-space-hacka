@@ -31,11 +31,11 @@ export function VerifyLane({ snap }: { snap: LiveSnapshot }) {
 
       <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_minmax(0,15rem)] md:items-stretch md:gap-4">
         <div className="rounded-md border border-line bg-ink px-3.5 py-3">
-          <div className="readout text-cyan">Servidor · recolector</div>
+          <div className="readout text-azul">Servidor · recolector</div>
           <div className="mt-1.5 text-[0.8125rem] leading-snug text-ash">Consulta FIRMS, arma lotes y firma con la clave secreta.</div>
           <dl className="mt-2.5 font-mono text-[0.6875rem] leading-relaxed">
             <dt className="text-smoke">key_id</dt>
-            <dd className="break-all text-cyan" title={c?.key_id}>
+            <dd className="break-all text-azul" title={c?.key_id}>
               {c ? shortHex(c.key_id, 8) : "pidiendo /api/collector…"}
             </dd>
             {seed && <dd className="text-smoke">{seed}</dd>}
@@ -103,7 +103,7 @@ export function VerifyLane({ snap }: { snap: LiveSnapshot }) {
       </div>
 
       {snap.keyChange && (
-        <p role="alert" className="mt-3 rounded-sm border border-amber/50 bg-amber/10 px-3 py-2 text-[0.8125rem] leading-snug text-amber">
+        <p role="alert" className="mt-3 rounded-sm border border-gold/50 bg-gold/10 px-3 py-2 text-[0.8125rem] leading-snug text-gold">
           <strong className="font-semibold">La clave del recolector cambió durante esta sesión</strong> (de{" "}
           <span className="font-mono">{shortHex(snap.keyChange.from, 6)}</span> a{" "}
           <span className="font-mono">{shortHex(snap.keyChange.to, 6)}</span>). Se adoptó la que publica /api/collector, que es
@@ -111,7 +111,7 @@ export function VerifyLane({ snap }: { snap: LiveSnapshot }) {
         </p>
       )}
       {mismatch && (
-        <p className="mt-3 rounded-sm border border-bad/40 bg-bad/10 px-3 py-2 text-[0.8125rem] leading-snug text-[#ffb3ba]">
+        <p className="mt-3 rounded-sm border border-bad/40 bg-bad/10 px-3 py-2 text-[0.8125rem] leading-snug text-bad">
           El flujo dice estar firmado con otra clave que la publicada en /api/collector. Los lotes se rechazan hasta que coincidan.
         </p>
       )}

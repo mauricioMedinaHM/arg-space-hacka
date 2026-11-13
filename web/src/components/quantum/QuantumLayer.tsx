@@ -9,6 +9,7 @@ import {
   type ShorData,
   type SummaryData,
 } from "@/lib/quantum";
+import { BocaStar, StarSpinner } from "@/components/ui/BocaStar";
 import { SectionHeading, Shell } from "@/components/ui/Section";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -50,11 +51,9 @@ function Pending<T>({ state, file, children }: { state: Loadable<T>; file: strin
   if (state.status === "loading") {
     return (
       <div className="space-y-4" role="status" aria-busy="true" aria-label="Cargando resultados">
-        <motion.div
-          className="h-48 rounded-md bg-char"
-          animate={{ opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 1.6, repeat: Infinity }}
-        />
+        <div className="flex h-48 items-center justify-center rounded-md border border-boca bg-boca/15">
+          <StarSpinner size={28} />
+        </div>
         <div className="h-4 w-2/3 rounded bg-char" />
         <div className="h-4 w-1/2 rounded bg-char" />
       </div>
@@ -62,8 +61,8 @@ function Pending<T>({ state, file, children }: { state: Loadable<T>; file: strin
   }
   if (state.status === "error") {
     return (
-      <p className="rounded-md border border-amber/40 bg-amber/5 p-5 text-[0.9375rem] leading-relaxed text-ash">
-        <strong className="font-semibold text-amber">No se pudo cargar /quantum/{file}.</strong> Los resultados se
+      <p className="rounded-md border border-gold/40 bg-gold/5 p-5 text-[0.9375rem] leading-relaxed text-ash">
+        <strong className="font-semibold text-gold">No se pudo cargar /quantum/{file}.</strong> Los resultados se
         generan con <code className="font-mono text-bone">python quantum/run_all.py</code>. El resto de la página
         funciona igual; la demo usa una clave aleatoria local.
       </p>
@@ -118,7 +117,7 @@ function QrngPanel({ d }: { d: QrngData }) {
             >
               <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Histograma de valores del QRNG simulado, aproximadamente uniforme">
                 {keys.map((k, i) => (
-                  <rect key={k} x={i * bw + 0.25} y={y(d.counts[k])} width={bw - 0.5} height={H - y(d.counts[k])} fill="var(--color-violet)" opacity={0.85} />
+                  <rect key={k} x={i * bw + 0.25} y={y(d.counts[k])} width={bw - 0.5} height={H - y(d.counts[k])} fill="var(--color-azul-soft)" opacity={0.85} />
                 ))}
                 <line x1={0} x2={W} y1={y(expected)} y2={y(expected)} stroke="var(--color-bone)" strokeWidth={1} strokeDasharray="4 3" />
               </svg>
@@ -142,7 +141,7 @@ function QrngPanel({ d }: { d: QrngData }) {
         </Takeaway>
         <div className="mt-6">
           <div className="text-[0.75rem] text-ash">seed_hex</div>
-          <div className="mt-1.5 break-all rounded-md border border-violet/40 bg-violet/5 p-3 font-mono text-[0.8125rem] leading-relaxed text-violet">
+          <div className="mt-1.5 break-all rounded-md border border-azul-soft/40 bg-azul-soft/5 p-3 font-mono text-[0.8125rem] leading-relaxed text-azul-soft">
             {d.seed_hex}
           </div>
         </div>
@@ -176,7 +175,7 @@ function Bars({
         <div key={it.key} className="flex min-w-0 flex-1 flex-col">
           <div className="relative flex flex-1 items-end border-b border-line-strong">
             <motion.div
-              className={`relative w-full origin-bottom rounded-t-sm ${it.strong ? "bg-violet" : "bg-violet/35"}`}
+              className={`relative w-full origin-bottom rounded-t-sm ${it.strong ? "bg-gold" : "bg-azul/45"}`}
               style={{ height: `${(it.value / max) * 100}%` }}
               initial={{ scaleY: 0 }}
               whileInView={{ scaleY: 1 }}
@@ -270,7 +269,7 @@ function ShorPanel({ d }: { d: ShorData }) {
               transition={{ duration: 0.5, delay: 0.3 + i * 0.1, ease }}
             >
               <span className="text-ash">{k}</span>
-              <span className={i > 2 ? "text-violet" : ""}>{v}</span>
+              <span className={i > 2 ? "text-azul-soft" : ""}>{v}</span>
             </motion.li>
           ))}
         </ol>
@@ -304,7 +303,7 @@ function GroverPanel({ d }: { d: GroverData }) {
                 bottom: (
                   <>
                     <span className="block text-bone">k = {it.k}</span>
-                    {it.k === d.optimal_k && <span className="block text-violet">óptimo</span>}
+                    {it.k === d.optimal_k && <span className="block text-azul-soft">óptimo</span>}
                   </>
                 ),
               }))}
@@ -360,7 +359,7 @@ export function QuantumLayer() {
   const summary = useQuantum<SummaryData>("summary");
 
   return (
-    <Shell id="cuantica">
+    <Shell id="cuantica" className="band-boca">
       <SectionHeading title="Tres circuitos Qiskit que explican por qué firmamos así">
         <p>
           La capa cuántica no protege los datos: justifica las decisiones criptográficas. Un generador simulado da la
@@ -391,12 +390,19 @@ export function QuantumLayer() {
                 active ? "text-bone" : "text-ash hover:text-bone"
               }`}
             >
-              <span className="block text-base font-semibold sm:text-xl">{t.label}</span>
-              <span className="mt-1 hidden text-[0.8125rem] text-ash sm:block">{t.sub}</span>
+              <span className="flex items-center gap-2 text-base font-semibold sm:text-xl">
+                <BocaStar
+                  size={14}
+                  filled={active}
+                  className={`shrink-0 transition-[color,transform] duration-300 ${active ? "rotate-0 text-gold" : "-rotate-[36deg] text-smoke"}`}
+                />
+                {t.label}
+              </span>
+              <span className="mt-1 hidden pl-[22px] text-[0.8125rem] text-ash sm:block">{t.sub}</span>
               {active && (
                 <motion.span
                   layoutId={`${uid}-underline`}
-                  className="absolute inset-x-0 -bottom-px h-0.5 bg-violet"
+                  className="absolute inset-x-0 -bottom-px h-0.5 bg-gold"
                   transition={{ type: "spring", stiffness: 480, damping: 40 }}
                 />
               )}

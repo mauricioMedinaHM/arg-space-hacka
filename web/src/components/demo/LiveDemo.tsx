@@ -52,7 +52,7 @@ function Legend() {
         <span className="h-2.5 w-2.5 rounded-full bg-fire" /> Foco de un lote válido (tamaño según FRP)
       </li>
       <li className="flex items-center gap-1.5">
-        <span className="h-2.5 w-2.5 rounded-full border-2 border-amber" /> Reordenado
+        <span className="h-2.5 w-2.5 rounded-full border-2 border-gold" /> Reordenado
       </li>
       <li className="flex items-center gap-1.5">
         <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden>
@@ -185,14 +185,14 @@ export function LiveDemo() {
   let scenarioNote: React.ReactNode;
   if (scenario !== "live" && !local) {
     scenarioNote = localError ? (
-      <span className="text-amber">No se pudo cargar el snapshot local. Probá con «FIRMS en vivo» o recargá la página.</span>
+      <span className="text-gold">No se pudo cargar el snapshot local. Probá con «FIRMS en vivo» o recargá la página.</span>
     ) : (
       "Cargando el snapshot local…"
     );
   } else if (scenario === "cafayate" && local) {
     scenarioNote = (
       <>
-        <strong className="font-semibold text-amber">Reconstrucción sintética, no son datos satelitales reales.</strong>{" "}
+        <strong className="font-semibold text-gold">Reconstrucción sintética, no son datos satelitales reales.</strong>{" "}
         {local.cafayate.length} detecciones simuladas del {range(local.cafayate)} en torno a Cafayate y el Chaco salteño.
       </>
     );
@@ -208,18 +208,18 @@ export function LiveDemo() {
   } else if (live.status === "server") {
     scenarioNote = (
       <>
-        <strong className={`font-semibold ${live.live ? "text-cyan" : "text-amber"}`}>
+        <strong className={`font-semibold ${live.live ? "text-azul" : "text-gold"}`}>
           {live.batches} lotes ya firmados por el servidor
         </strong>{" "}
         ({live.count} focos · {live.label}). Son los mismos que verificó el{" "}
-        <a href="#monitor" className="text-fire underline underline-offset-2 hover:text-bone">
+        <a href="#monitor" className="text-azul-soft underline underline-offset-2 hover:text-gold">
           monitor en tiempo real
         </a>
         : tu navegador sólo tiene la clave pública, así que cualquier cambio que hagas en la red rompe la firma.
       </>
     );
   } else if (live.status === "fallback") {
-    scenarioNote = <span className="text-amber">{live.note}</span>;
+    scenarioNote = <span className="text-gold">{live.note}</span>;
   }
 
   return (
@@ -229,7 +229,7 @@ export function LiveDemo() {
           Sandbox de ataques. El recolector agrupa detecciones en lotes, los encadena y los firma con {ALG}. Vos manejás la
           red: alterá, duplicá, suprimí, reordená o falsificá lotes y mirá qué llega al mapa. Los escenarios locales se firman
           en tu navegador; «FIRMS en vivo» reproduce los lotes que firmó el servidor para el{" "}
-          <a href="#monitor" className="text-fire underline underline-offset-2 hover:text-bone">
+          <a href="#monitor" className="text-azul-soft underline underline-offset-2 hover:text-gold">
             monitor en tiempo real
           </a>
           .
@@ -246,7 +246,7 @@ export function LiveDemo() {
         {/* Controles */}
         <div className="space-y-4 border-b border-line p-4 sm:p-5">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <Segmented label="Escenario" options={SCENARIOS} value={scenario} onChange={choose} tone="fire" />
+            <Segmented label="Escenario" options={SCENARIOS} value={scenario} onChange={choose} tone="gold" />
             <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
               <div className="flex items-center gap-2 text-[0.8125rem] text-ash">
                 Velocidad
@@ -274,7 +274,7 @@ export function LiveDemo() {
               <button
                 type="button"
                 onClick={loadServerCycle}
-                className="ml-2 inline-flex min-h-7 items-center rounded-sm border border-cyan/50 px-2 text-[0.75rem] font-medium text-cyan transition-colors hover:bg-cyan hover:text-ink"
+                className="ml-2 inline-flex min-h-7 items-center rounded-sm border border-gold/60 px-2 text-[0.75rem] font-medium text-gold transition-colors hover:bg-gold hover:text-ink"
               >
                 Hay un ciclo más nuevo: cargarlo
               </button>
@@ -286,7 +286,7 @@ export function LiveDemo() {
               type="button"
               disabled={!canRun}
               onClick={() => (snap.playing ? engine.pause() : engine.play())}
-              className="inline-flex min-h-11 min-w-[9.5rem] items-center justify-center gap-2 rounded-md bg-fire px-4 text-[0.9375rem] font-semibold text-ink transition-[background-color,transform] duration-150 hover:bg-[#ff8442] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex min-h-11 min-w-[9.5rem] items-center justify-center gap-2 rounded-md bg-gold px-4 text-[0.9375rem] font-semibold text-ink transition-[background-color,transform] duration-150 hover:bg-gold-soft active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
             >
               {snap.playing ? <PauseIcon /> : <PlayIcon />}
               {snap.playing ? "Pausar" : snap.done ? "Repetir" : snap.signed > 0 ? "Continuar" : "Reproducir"}
@@ -317,7 +317,7 @@ export function LiveDemo() {
                 aria-valuenow={snap.signed}
               >
                 <motion.div
-                  className="h-full origin-left bg-cyan"
+                  className="h-full origin-left bg-gold"
                   animate={{ scaleX: progress }}
                   initial={false}
                   transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
@@ -360,7 +360,7 @@ export function LiveDemo() {
             <div className="text-[0.75rem] text-ash">
               Clave pública del recolector{snap.presigned ? " del servidor" : ""} (key_id)
             </div>
-            <div className="mt-1 break-all font-mono text-sm text-cyan">{snap.keyId ?? "generando clave…"}</div>
+            <div className="mt-1 break-all font-mono text-sm text-azul">{snap.keyId ?? "generando clave…"}</div>
           </div>
           <div className="font-mono text-xs leading-relaxed text-ash">
             {ALG} · clave pública {SIZES.publicKey.toLocaleString("es-AR")} B · firma{" "}
@@ -370,18 +370,18 @@ export function LiveDemo() {
           <div className="text-[0.8125rem] leading-snug text-ash lg:ml-auto lg:max-w-sm lg:text-right">
             {snap.keyOrigin === "qrng" && (
               <>
-                Derivada de la semilla del <a href="#cuantica" className="text-violet underline underline-offset-2">QRNG simulado</a>. Es
+                Derivada de la semilla del <a href="#cuantica" className="text-azul-soft underline underline-offset-2">QRNG simulado</a>. Es
                 una semilla pública, sólo para la demo.
               </>
             )}
             {snap.keyOrigin === "server" && (
               <>
-                Clave pública del recolector del servidor (<code className="font-mono text-cyan">/api/collector</code>). La clave
+                Clave pública del recolector del servidor (<code className="font-mono text-azul">/api/collector</code>). La clave
                 secreta nunca llega al navegador.
               </>
             )}
             {snap.keyOrigin === "random" && keyError && (
-              <span className="text-amber">
+              <span className="text-gold">
                 No se pudo leer /quantum/qrng.json: se generó una clave aleatoria local para esta sesión.
               </span>
             )}

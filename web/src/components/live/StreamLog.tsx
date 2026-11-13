@@ -3,13 +3,14 @@ import { AnimatePresence, motion } from "motion/react";
 import type { LiveSnapshot } from "@/lib/live/streamStore";
 import { formatSaltaClock } from "@/lib/live/time";
 import { StatusBadge, shortHex } from "@/components/demo/meta";
+import { StarSpinner } from "@/components/ui/BocaStar";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
 const NOTE_STYLE = {
   info: "text-ash",
-  warn: "bg-amber/5 text-amber",
-  error: "bg-[#1d1113] text-[#ffb3ba]",
+  warn: "bg-gold/5 text-gold",
+  error: "bg-bad/10 text-bad",
 } as const;
 
 /** Registro del flujo: un renglón por lote verificado, más reciente arriba. */
@@ -32,7 +33,8 @@ export function StreamLog({ snap }: { snap: LiveSnapshot }) {
         tabIndex={0}
       >
         {snap.log.length === 0 && (
-          <li className="px-4 py-10 text-sm leading-relaxed text-ash sm:px-5">
+          <li className="flex items-center gap-3 px-4 py-10 text-sm leading-relaxed text-ash sm:px-5">
+            <StarSpinner size={16} />
             Esperando el primer lote firmado del servidor…
           </li>
         )}
